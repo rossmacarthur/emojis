@@ -1,0 +1,9 @@
+[package]
+name = "emojis"
+version = "0.0.0"
+authors = ["Ross MacArthur <ross@macarthur.io>"]
+edition = "2018"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+
+# See more at https://doc.rust-lang.org/cargo/reference/manifest.html
