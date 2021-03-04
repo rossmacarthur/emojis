@@ -10,7 +10,7 @@ pub struct Emoji(str);
 /// Macro to construct a `const` [`Emoji`].
 ///
 /// This is required until we can make [`Emoji::new()`] `const`.
-macro_rules! new {
+macro_rules! emoji {
     ($inner:expr) => {{
         let inner: &str = $inner;
         let emoji: &$crate::Emoji = unsafe { core::mem::transmute(inner) };
@@ -30,6 +30,7 @@ impl Emoji {
     /// #
     /// let rocket: &Emoji = Emoji::new("🚀");
     /// ```
+    #[cfg(test)]
     fn new(inner: &str) -> &Self {
         let ptr = inner as *const str as *const Self;
         // Safety: `Self` is #[repr(transparent)]
@@ -54,7 +55,6 @@ impl Emoji {
     }
 }
 
-
 impl ops::Deref for Emoji {
     type Target = str;
 
@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn emoji_new() {
-        const GRINNING_FACE: &Emoji = new!("\u{1f600}");
+        const GRINNING_FACE: &Emoji = emoji!("\u{1f600}");
         assert_eq!(GRINNING_FACE, Emoji::new("😀"));
     }
 }

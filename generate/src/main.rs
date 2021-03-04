@@ -1,7 +1,10 @@
+use std::fs;
 use std::iter;
+use std::path::PathBuf;
 use std::str;
 
 use anyhow::{bail, Context, Result};
+use heck::ShoutySnakeCase;
 use indexmap::IndexMap;
 
 const URL: &str = "https://unicode.org/Public/emoji/13.1/emoji-test.txt";
@@ -18,7 +21,6 @@ enum Status {
 struct Emoji {
     code_points: Vec<String>,
     status: Status,
-    emoji: String,
     name: String,
 }
 
@@ -47,6 +49,7 @@ trait LinesExt {
     fn next_group(&mut self) -> Option<String> {
         self.consume_until_starts_with("# group: ", None)
     }
+
     fn next_subgroup(&mut self) -> Option<String> {
         self.consume_until_starts_with("# subgroup: ", Some("# group: "))
     }
@@ -94,15 +97,45 @@ impl Emoji {
         };
         let rest = it.next().context("expected emoji name")?.trim();
         let mut it = rest.splitn(3, ' ');
-        let emoji = it.next().context("expected emoji")?.trim().to_owned();
+        let _emoji = it.next().context("expected emoji")?.trim().to_owned();
         let _version = it.next().context("expected version")?;
         let name = it.next().context("expected name")?.trim().to_owned();
         Ok(Self {
             code_points,
             status,
-            emoji,
             name,
         })
+    }
+
+    fn gen_emoji(&self) -> String {
+        fn to_char(s: &String) -> char {
+            std::char::from_u32(u32::from_str_radix(s, 16).unwrap()).unwrap()
+        }
+        self.code_points.iter().map(to_char).collect()
+    }
+
+    fn gen_var_name(&self) -> String {
+        self.name
+            .chars()
+            .filter(char::is_ascii)
+            .collect::<String>()
+            .replace(".", "")
+            .replace("#", "hash")
+            .replace("*", "asterisk")
+            .replace("1st", "first")
+            .replace("2nd", "second")
+            .replace("3rd", "third")
+            .to_shouty_snake_case()
+    }
+
+    fn gen_constant_item(&self) -> String {
+        let emoji = self.gen_emoji();
+        format!(
+            "/// {}\npub const {}: &Emoji = emoji!(\"{}\");\n",
+            emoji,
+            self.gen_var_name(),
+            emoji,
+        )
     }
 }
 
@@ -128,9 +161,30 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
     Ok(parsed_data)
 }
 
+fn generate(parsed_data: ParsedData) -> String {
+    let mut module = String::new();
+    module.push_str("use crate::Emoji;\n\n");
+    for subgroups in parsed_data.values() {
+        for emojis in subgroups.values() {
+            for emoji in emojis {
+                if matches!(emoji.status, Status::FullyQualified)
+                    && !emoji.name.contains("skin tone")
+                {
+                    module.push_str(&emoji.gen_constant_item());
+                }
+            }
+        }
+    }
+    module
+}
+
 fn main() -> Result<()> {
     let data = fetch_emoji_data()?;
     let parsed_data = parse_emoji_data(&data)?;
-    println!("{:#?}", parsed_data);
+    let module = generate(parsed_data);
+    let path: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "src", "generated.rs"]
+        .iter()
+        .collect();
+    fs::write(&path, module)?;
     Ok(())
 }
