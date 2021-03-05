@@ -3,9 +3,8 @@
 use core::cmp;
 use core::convert;
 use core::ops;
-use core::slice;
 
-/// Represents an emoji, as defined by the Unicode standard.
+/// Represents an emoji.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Emoji {
     id: usize,
@@ -17,8 +16,9 @@ pub struct Emoji {
 impl Emoji {
     /// Returns this emoji as a string.
     ///
-    /// `Emoji` also implements [`Deref`](#impl-Deref) to [`str`] so this
-    /// shouldn't be needed too often.
+    /// Note: `Emoji` also implements [`Deref`](#impl-Deref) to [`str`], and
+    /// [`AsRef<str>`](#impl-AsRef<str>) so this method shouldn't have to be
+    /// used very frequently.
     ///
     /// # Examples
     ///
@@ -96,10 +96,10 @@ impl ops::Deref for Emoji {
 /// # Examples
 ///
 /// ```
-/// let mut it = emojis::iter();
-/// assert_eq!(it.next().unwrap(), "😀");
+/// let mut iter = emojis::iter();
+/// assert_eq!(iter.next().unwrap(), "😀");
 /// ```
-pub fn iter() -> slice::Iter<'static, Emoji> {
+pub fn iter() -> impl Iterator<Item = &'static Emoji> {
     generated::EMOJIS.iter()
 }
 
@@ -119,6 +119,23 @@ mod generated;
 
 /// The category of emoji.
 pub use generated::Group;
+
+impl Group {
+    /// Returns an iterator over all emojis in this group.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut iter = emojis::Group::Flags.emojis();
+    /// assert_eq!(iter.next().unwrap(), "🏁");
+    /// ```
+    pub fn emojis(&self) -> impl Iterator<Item = &'static Emoji> {
+        let group = *self;
+        iter()
+            .skip_while(move |emoji| emoji.group != group)
+            .take_while(move |emoji| emoji.group == group)
+    }
+}
 
 #[cfg(test)]
 mod tests {
