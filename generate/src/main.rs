@@ -6,8 +6,17 @@ use std::str;
 use anyhow::{bail, Context, Result};
 use heck::ShoutySnakeCase;
 use indexmap::IndexMap;
+use itertools::Itertools;
 
 const URL: &str = "https://unicode.org/Public/emoji/13.1/emoji-test.txt";
+
+const SKIN_TONES: &[char] = &[
+    '\u{1f3fb}', // light skin tone
+    '\u{1f3fc}', // medium-light skin tone
+    '\u{1f3fd}', // medium skin tone
+    '\u{1f3fe}', // medium-dark skin tone
+    '\u{1f3ff}', // dark skin tone
+];
 
 #[derive(Debug)]
 enum Status {
@@ -19,9 +28,9 @@ enum Status {
 
 #[derive(Debug)]
 struct Emoji {
-    code_points: Vec<String>,
+    chars: Vec<char>,
     status: Status,
-    name: String,
+    description: String,
 }
 
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;
@@ -78,44 +87,54 @@ impl LinesExt for Lines<'_> {
     }
 }
 
+fn parse_code_point(code_point: &str) -> Result<char> {
+    let scalar = u32::from_str_radix(code_point, 16).context("not hex")?;
+    Ok(std::char::from_u32(scalar).context("not Unicode scalar value")?)
+}
+
 impl Emoji {
     fn from_line(line: &str) -> Result<Self> {
-        let mut it = line.splitn(3, &[';', '#'][..]);
-        let code_points = it
-            .next()
-            .context("expected code points")?
+        let (code_points, rest) = line
+            .splitn(2, ';')
+            .next_tuple()
+            .context("expected code points")?;
+        let (status, rest) = rest
+            .splitn(2, '#')
+            .next_tuple()
+            .context("expected status")?;
+        let description = rest
+            .trim()
+            .splitn(3, ' ')
+            .nth(2)
+            .context("expected description")?;
+
+        let chars = code_points
             .trim()
             .split(' ')
-            .map(ToOwned::to_owned)
-            .collect();
-        let status = match it.next().context("expected status")?.trim() {
+            .map(parse_code_point)
+            .collect::<Result<_>>()?;
+        let status = match status.trim() {
             "fully-qualified" => Status::FullyQualified,
             "minimally-qualified" => Status::MinimallyQualified,
             "unqualified" => Status::Unqualified,
             "component" => Status::Component,
             s => bail!("unrecognized status `{}`", s),
         };
-        let rest = it.next().context("expected emoji name")?.trim();
-        let mut it = rest.splitn(3, ' ');
-        let _emoji = it.next().context("expected emoji")?.trim().to_owned();
-        let _version = it.next().context("expected version")?;
-        let name = it.next().context("expected name")?.trim().to_owned();
+        let description = description.trim().to_owned();
+
         Ok(Self {
-            code_points,
+            chars,
             status,
-            name,
+            description,
         })
     }
 
-    fn gen_emoji(&self) -> String {
-        fn to_char(s: &String) -> char {
-            std::char::from_u32(u32::from_str_radix(s, 16).unwrap()).unwrap()
-        }
-        self.code_points.iter().map(to_char).collect()
+    fn emoji(&self) -> String {
+        self.chars.iter().collect()
     }
 
     fn gen_var_name(&self) -> String {
-        self.name
+        self.description
             .chars()
             .filter(char::is_ascii)
             .collect::<String>()
@@ -129,7 +148,7 @@ impl Emoji {
     }
 
     fn gen_constant_item(&self) -> String {
-        let emoji = self.gen_emoji();
+        let emoji = self.emoji();
         format!(
             "/// {}\npub const {}: &Emoji = emoji!(\"{}\");\n",
             emoji,
@@ -168,7 +187,7 @@ fn generate(parsed_data: ParsedData) -> String {
         for emojis in subgroups.values() {
             for emoji in emojis {
                 if matches!(emoji.status, Status::FullyQualified)
-                    && !emoji.name.contains("skin tone")
+                    && !SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
                 {
                     module.push_str(&emoji.gen_constant_item());
                 }
