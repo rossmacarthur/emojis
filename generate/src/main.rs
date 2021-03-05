@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::str;
 
 use anyhow::{bail, Context, Result};
+use heck::CamelCase;
 use indexmap::IndexMap;
 use itertools::Itertools;
 
@@ -139,8 +140,9 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
                     break;
                 }
                 let emoji = Emoji::from_line(line)?;
+                let group = group.replace("&", "And").to_camel_case();
                 parsed_data
-                    .entry(group.clone())
+                    .entry(group)
                     .or_default()
                     .entry(subgroup.clone())
                     .or_insert_with(Vec::new)
@@ -151,30 +153,52 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
     Ok(parsed_data)
 }
 
-fn generate(parsed_data: ParsedData) -> String {
+fn generate_group_enum(parsed_data: &ParsedData) -> String {
+    let mut group = String::new();
+    group.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
+    group.push_str("pub enum Group {\n");
+    for name in parsed_data.keys() {
+        if name == "Component" {
+            continue;
+        }
+        group.push_str(&format!("   {},\n", name));
+    }
+    group.push_str("}\n\n");
+    group
+}
+
+fn generate_emojis_array(parsed_data: &ParsedData) -> String {
     let mut id = 0;
-    let mut module = String::new();
-    module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
-    module.push_str("use crate::Emoji;\n\n");
-    module.push_str("pub const EMOJIS: &[Emoji] = &[\n");
-    for subgroups in parsed_data.values() {
-        for emojis in subgroups.values() {
-            for emoji in emojis {
+    let mut emojis = String::new();
+    emojis.push_str("pub const EMOJIS: &[Emoji] = &[\n");
+    for (group, subgroups) in parsed_data {
+        for subgroup in subgroups.values() {
+            for emoji in subgroup {
                 if matches!(emoji.status, Status::FullyQualified)
                     && !SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
                 {
-                    module.push_str(&format!(
-                        "    Emoji {{ id: {}, emoji: \"{}\", name: \"{}\" }},\n",
+                    emojis.push_str(&format!(
+                        "    Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{} }},\n",
                         id,
                         emoji.emoji(),
                         emoji.name,
+                        group,
                     ));
                     id += 1;
                 }
             }
         }
     }
-    module.push_str("];\n");
+    emojis.push_str("];\n");
+    emojis
+}
+
+fn generate(parsed_data: ParsedData) -> String {
+    let mut module = String::new();
+    module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
+    module.push_str("use crate::Emoji;\n\n");
+    module.push_str(&generate_group_enum(&parsed_data));
+    module.push_str(&generate_emojis_array(&parsed_data));
     module
 }
 

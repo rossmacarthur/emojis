@@ -11,6 +11,7 @@ pub struct Emoji {
     id: usize,
     emoji: &'static str,
     name: &'static str,
+    group: generated::Group,
 }
 
 impl Emoji {
@@ -39,6 +40,20 @@ impl Emoji {
     /// ```
     pub const fn name(&self) -> &str {
         self.name
+    }
+
+    /// Returns this emoji's group.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use emojis::Group;
+    /// #
+    /// let flag = emojis::lookup("🇿🇦").unwrap();
+    /// assert_eq!(flag.group(), Group::Flags);
+    /// ```
+    pub const fn group(&self) -> Group {
+        self.group
     }
 }
 
@@ -103,6 +118,9 @@ pub fn lookup(emoji: &str) -> Option<Emoji> {
 }
 
 mod generated;
+
+/// The category of emoji.
+pub use generated::Group;
 
 #[cfg(test)]
 mod tests {
