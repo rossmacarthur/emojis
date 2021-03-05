@@ -29,7 +29,7 @@ enum Status {
 struct Emoji {
     chars: Vec<char>,
     status: Status,
-    description: String,
+    name: String,
 }
 
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;
@@ -101,11 +101,7 @@ impl Emoji {
             .splitn(2, '#')
             .next_tuple()
             .context("expected status")?;
-        let description = rest
-            .trim()
-            .splitn(3, ' ')
-            .nth(2)
-            .context("expected description")?;
+        let name = rest.trim().splitn(3, ' ').nth(2).context("expected name")?;
 
         let chars = code_points
             .trim()
@@ -119,12 +115,12 @@ impl Emoji {
             "component" => Status::Component,
             s => bail!("unrecognized status `{}`", s),
         };
-        let description = description.trim().to_owned();
+        let name = name.trim().to_owned();
 
         Ok(Self {
             chars,
             status,
-            description,
+            name,
         })
     }
 
@@ -158,7 +154,7 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
 fn generate(parsed_data: ParsedData) -> String {
     let mut id = 0;
     let mut module = String::new();
-    module.push_str("#![rustfmt::skip]\n\n");
+    module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
     module.push_str("use crate::Emoji;\n\n");
     module.push_str("pub const EMOJIS: &[Emoji] = &[\n");
     for subgroups in parsed_data.values() {
@@ -168,9 +164,10 @@ fn generate(parsed_data: ParsedData) -> String {
                     && !SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
                 {
                     module.push_str(&format!(
-                        "    Emoji {{ id: {}, emoji: \"{}\" }},\n",
+                        "    Emoji {{ id: {}, emoji: \"{}\", name: \"{}\" }},\n",
                         id,
-                        emoji.emoji()
+                        emoji.emoji(),
+                        emoji.name,
                     ));
                     id += 1;
                 }

@@ -10,10 +10,11 @@ use core::slice;
 pub struct Emoji {
     id: usize,
     emoji: &'static str,
+    name: &'static str,
 }
 
 impl Emoji {
-    /// Return a reference to the underlying string.
+    /// Returns this emoji as a string.
     ///
     /// `Emoji` also implements [`Deref`](#impl-Deref) to [`str`] so this
     /// shouldn't be needed too often.
@@ -21,14 +22,23 @@ impl Emoji {
     /// # Examples
     ///
     /// ```
-    /// # use emojis::Emoji;
-    /// #
     /// let rocket = emojis::lookup("🚀").unwrap();
     /// assert_eq!(rocket.as_str(), "🚀")
     /// ```
-    #[inline]
     pub const fn as_str(&self) -> &str {
-        &self.emoji
+        self.emoji
+    }
+
+    /// Returns the CLDR Short Name for this emoji.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let cool = emojis::lookup("😎").unwrap();
+    /// assert_eq!(cool.name(), "smiling face with sunglasses");
+    /// ```
+    pub const fn name(&self) -> &str {
+        self.name
     }
 }
 
