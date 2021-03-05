@@ -57,7 +57,7 @@ impl Emoji {
     }
 }
 
-impl cmp::PartialEq<str> for &Emoji {
+impl cmp::PartialEq<str> for Emoji {
     fn eq(&self, s: &str) -> bool {
         cmp::PartialEq::eq(self.as_str(), s)
     }
@@ -108,13 +108,11 @@ pub fn iter() -> slice::Iter<'static, Emoji> {
 /// # Examples
 ///
 /// ```
-/// # use emojis::Emoji;
-/// #
-/// let rocket: &Emoji = emojis::lookup("🚀").unwrap();
+/// let rocket = emojis::lookup("🚀").unwrap();
 /// assert!(emojis::lookup("ʕっ•ᴥ•ʔっ").is_none());
 /// ```
 pub fn lookup(emoji: &str) -> Option<Emoji> {
-    generated::EMOJIS.iter().find(|e| e == emoji).copied()
+    generated::EMOJIS.iter().find(|&e| e == emoji).copied()
 }
 
 mod generated;
