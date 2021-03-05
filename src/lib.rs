@@ -57,11 +57,27 @@ impl Emoji {
     pub const fn as_str(&self) -> &str {
         &self.0
     }
+
+    fn id(&self) -> usize {
+        generated::EMOJIS.iter().position(|&e| e == self).unwrap()
+    }
 }
 
 impl cmp::PartialEq<str> for &Emoji {
     fn eq(&self, s: &str) -> bool {
-        PartialEq::eq(self.as_str(), s)
+        cmp::PartialEq::eq(self.as_str(), s)
+    }
+}
+
+impl cmp::PartialOrd for Emoji {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(cmp::Ord::cmp(self, other))
+    }
+}
+
+impl cmp::Ord for Emoji {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        cmp::Ord::cmp(&self.id(), &other.id())
     }
 }
 
@@ -117,5 +133,14 @@ mod tests {
     fn emoji_new() {
         const GRINNING_FACE: &Emoji = emoji!("\u{1f600}");
         assert_eq!(GRINNING_FACE, Emoji::new("😀"));
+    }
+
+    #[test]
+    fn emoji_ordering() {
+        let grinning_face = lookup("😀");
+        let winking_face = lookup("😉");
+        assert!(grinning_face < winking_face);
+        assert!(winking_face > grinning_face);
+        assert!(grinning_face == grinning_face);
     }
 }
