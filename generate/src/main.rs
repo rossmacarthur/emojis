@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use std::str;
 
 use anyhow::{bail, Context, Result};
-use heck::ShoutySnakeCase;
 use indexmap::IndexMap;
 use itertools::Itertools;
 
@@ -132,30 +131,6 @@ impl Emoji {
     fn emoji(&self) -> String {
         self.chars.iter().collect()
     }
-
-    fn gen_var_name(&self) -> String {
-        self.description
-            .chars()
-            .filter(char::is_ascii)
-            .collect::<String>()
-            .replace(".", "")
-            .replace("#", "hash")
-            .replace("*", "asterisk")
-            .replace("1st", "first")
-            .replace("2nd", "second")
-            .replace("3rd", "third")
-            .to_shouty_snake_case()
-    }
-
-    fn gen_constant_item(&self) -> String {
-        let emoji = self.emoji();
-        format!(
-            "/// {}\npub const {}: &Emoji = emoji!(\"{}\");\n",
-            emoji,
-            self.gen_var_name(),
-            emoji,
-        )
-    }
 }
 
 fn parse_emoji_data(data: &str) -> Result<ParsedData> {
@@ -183,17 +158,19 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
 fn generate(parsed_data: ParsedData) -> String {
     let mut module = String::new();
     module.push_str("use crate::Emoji;\n\n");
+    module.push_str("pub const EMOJIS: &[&Emoji] = &[\n");
     for subgroups in parsed_data.values() {
         for emojis in subgroups.values() {
             for emoji in emojis {
                 if matches!(emoji.status, Status::FullyQualified)
                     && !SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
                 {
-                    module.push_str(&emoji.gen_constant_item());
+                    module.push_str(&format!("    emoji!(\"{}\"),\n", emoji.emoji()))
                 }
             }
         }
     }
+    module.push_str("];\n");
     module
 }
 

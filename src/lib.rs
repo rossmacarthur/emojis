@@ -1,9 +1,12 @@
 #![no_std]
 
+use core::cmp;
+use core::convert;
 use core::ops;
+use core::slice;
 
 /// Represents an emoji, as defined by the Unicode standard.
-#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Emoji(str);
 
@@ -47,11 +50,24 @@ impl Emoji {
     /// ```
     /// # use emojis::Emoji;
     /// #
-    /// let rocket = Emoji::new("🚀");
+    /// let rocket = emojis::lookup("🚀").unwrap();
     /// assert_eq!(rocket.as_str(), "🚀")
     /// ```
+    #[inline]
     pub const fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+impl cmp::PartialEq<str> for &Emoji {
+    fn eq(&self, s: &str) -> bool {
+        PartialEq::eq(self.as_str(), s)
+    }
+}
+
+impl convert::AsRef<str> for Emoji {
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -59,9 +75,39 @@ impl ops::Deref for Emoji {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.as_str()
     }
 }
+
+/// Returns an iterator over all emojis.
+///
+/// Ordered by Unicode CLDR data.
+///
+/// # Examples
+///
+/// ```
+/// let mut it = emojis::iter();
+/// assert_eq!(it.next().unwrap(), "😀");
+/// ```
+pub fn iter() -> slice::Iter<'static, &'static Emoji> {
+    generated::EMOJIS.iter()
+}
+
+/// Lookup an emoji by Unicode value.
+///
+/// # Examples
+///
+/// ```
+/// # use emojis::Emoji;
+/// #
+/// let rocket: &Emoji = emojis::lookup("🚀").unwrap();
+/// assert!(emojis::lookup("ʕっ•ᴥ•ʔっ").is_none());
+/// ```
+pub fn lookup(emoji: &str) -> Option<&Emoji> {
+    generated::EMOJIS.iter().copied().find(|e| e == emoji)
+}
+
+mod generated;
 
 #[cfg(test)]
 mod tests {
