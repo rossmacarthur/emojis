@@ -6,40 +6,13 @@ use core::ops;
 use core::slice;
 
 /// Represents an emoji, as defined by the Unicode standard.
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[repr(transparent)]
-pub struct Emoji(str);
-
-/// Macro to construct a `const` [`Emoji`].
-///
-/// This is required until we can make [`Emoji::new()`] `const`.
-macro_rules! emoji {
-    ($inner:expr) => {{
-        let inner: &str = $inner;
-        let emoji: &$crate::Emoji = unsafe { core::mem::transmute(inner) };
-        emoji
-    }};
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Emoji {
+    id: usize,
+    emoji: &'static str,
 }
 
 impl Emoji {
-    /// Construct a new `Emoji`.
-    ///
-    /// For a `const` version of this use [`new!()`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use emojis::Emoji;
-    /// #
-    /// let rocket: &Emoji = Emoji::new("🚀");
-    /// ```
-    #[cfg(test)]
-    fn new(inner: &str) -> &Self {
-        let ptr = inner as *const str as *const Self;
-        // Safety: `Self` is #[repr(transparent)]
-        unsafe { &*ptr }
-    }
-
     /// Return a reference to the underlying string.
     ///
     /// `Emoji` also implements [`Deref`](#impl-Deref) to [`str`] so this
@@ -55,11 +28,7 @@ impl Emoji {
     /// ```
     #[inline]
     pub const fn as_str(&self) -> &str {
-        &self.0
-    }
-
-    fn id(&self) -> usize {
-        generated::EMOJIS.iter().position(|&e| e == self).unwrap()
+        &self.emoji
     }
 }
 
@@ -77,7 +46,7 @@ impl cmp::PartialOrd for Emoji {
 
 impl cmp::Ord for Emoji {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        cmp::Ord::cmp(&self.id(), &other.id())
+        cmp::Ord::cmp(&self.id, &other.id)
     }
 }
 
@@ -105,7 +74,7 @@ impl ops::Deref for Emoji {
 /// let mut it = emojis::iter();
 /// assert_eq!(it.next().unwrap(), "😀");
 /// ```
-pub fn iter() -> slice::Iter<'static, &'static Emoji> {
+pub fn iter() -> slice::Iter<'static, Emoji> {
     generated::EMOJIS.iter()
 }
 
@@ -119,8 +88,8 @@ pub fn iter() -> slice::Iter<'static, &'static Emoji> {
 /// let rocket: &Emoji = emojis::lookup("🚀").unwrap();
 /// assert!(emojis::lookup("ʕっ•ᴥ•ʔっ").is_none());
 /// ```
-pub fn lookup(emoji: &str) -> Option<&Emoji> {
-    generated::EMOJIS.iter().copied().find(|e| e == emoji)
+pub fn lookup(emoji: &str) -> Option<Emoji> {
+    generated::EMOJIS.iter().find(|e| e == emoji).copied()
 }
 
 mod generated;
@@ -128,12 +97,6 @@ mod generated;
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn emoji_new() {
-        const GRINNING_FACE: &Emoji = emoji!("\u{1f600}");
-        assert_eq!(GRINNING_FACE, Emoji::new("😀"));
-    }
 
     #[test]
     fn emoji_ordering() {

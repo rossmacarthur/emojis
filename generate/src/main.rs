@@ -156,16 +156,23 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
 }
 
 fn generate(parsed_data: ParsedData) -> String {
+    let mut id = 0;
     let mut module = String::new();
+    module.push_str("#![rustfmt::skip]\n\n");
     module.push_str("use crate::Emoji;\n\n");
-    module.push_str("pub const EMOJIS: &[&Emoji] = &[\n");
+    module.push_str("pub const EMOJIS: &[Emoji] = &[\n");
     for subgroups in parsed_data.values() {
         for emojis in subgroups.values() {
             for emoji in emojis {
                 if matches!(emoji.status, Status::FullyQualified)
                     && !SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
                 {
-                    module.push_str(&format!("    emoji!(\"{}\"),\n", emoji.emoji()))
+                    module.push_str(&format!(
+                        "    Emoji {{ id: {}, emoji: \"{}\" }},\n",
+                        id,
+                        emoji.emoji()
+                    ));
+                    id += 1;
                 }
             }
         }
