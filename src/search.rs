@@ -12,8 +12,8 @@ use crate::Emoji;
 /// Search all emojis.
 ///
 /// This function returns an iterator over emojis matching the given search
-/// query. The query is matched against the emoji CLDR short names and higher
-/// scores are returned first.
+/// query. The query is matched against the emoji CLDR short names and exact
+/// matches and higher scores are returned first.
 ///
 /// # Examples
 ///

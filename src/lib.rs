@@ -1,3 +1,33 @@
+//! Lookup, iterate, and search emojis.
+//!
+//! # Examples
+//!
+//! Lookup any emoji.
+//! ```
+//! let face = emojis::lookup("🤨").unwrap();
+//! assert_eq!(face.as_str(), "\u{1F928}");
+//! assert_eq!(face.name(), "face with raised eyebrow");
+//! assert_eq!(face.group(), emojis::Group::SmileysAndEmotion);
+//! ```
+//!
+//! Iterate over all the emojis.
+//! ```
+//! let emoji = emojis::iter().next().unwrap();
+//! assert_eq!(emoji, "😀");
+//! ```
+//!
+//! Iterate over all the emojis in a group.
+//! ```
+//! let emoji = emojis::Group::FoodAndDrink.emojis().next().unwrap();
+//! assert_eq!(emoji, "🍇");
+//! ```
+//!
+//! Fuzzy search for emojis.
+//! ```
+//! let emoji = emojis::search("rket").next().unwrap();
+//! assert_eq!(emoji, "🚀");
+//! ```
+
 #![no_std]
 
 #[cfg(feature = "std")]
