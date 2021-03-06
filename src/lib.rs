@@ -1,16 +1,29 @@
 #![no_std]
 
+#[cfg(feature = "std")]
+extern crate std;
+
+mod search;
+
 use core::cmp;
 use core::convert;
 use core::ops;
 
+pub use crate::generated::Group;
+
+#[cfg(feature = "search")]
+pub use crate::search::search;
+
 /// Represents an emoji.
+///
+/// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for
+/// more information.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Emoji {
     id: usize,
     emoji: &'static str,
     name: &'static str,
-    group: generated::Group,
+    group: Group,
 }
 
 impl Emoji {
@@ -30,7 +43,7 @@ impl Emoji {
         self.emoji
     }
 
-    /// Returns the CLDR Short Name for this emoji.
+    /// Returns the CLDR short name for this emoji.
     ///
     /// # Examples
     ///
@@ -100,7 +113,7 @@ impl ops::Deref for Emoji {
 /// assert_eq!(iter.next().unwrap(), "😀");
 /// ```
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
-    generated::EMOJIS.iter()
+    crate::generated::EMOJIS.iter()
 }
 
 /// Lookup an emoji by Unicode value.
@@ -112,13 +125,11 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 /// assert!(emojis::lookup("ʕっ•ᴥ•ʔっ").is_none());
 /// ```
 pub fn lookup(emoji: &str) -> Option<Emoji> {
-    generated::EMOJIS.iter().find(|&e| e == emoji).copied()
+    crate::generated::EMOJIS
+        .iter()
+        .find(|&e| e == emoji)
+        .copied()
 }
-
-mod generated;
-
-/// The category of emoji.
-pub use generated::Group;
 
 impl Group {
     /// Returns an iterator over all emojis in this group.
@@ -136,6 +147,8 @@ impl Group {
             .take_while(move |emoji| emoji.group == group)
     }
 }
+
+mod generated;
 
 #[cfg(test)]
 mod tests {
