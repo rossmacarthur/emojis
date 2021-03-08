@@ -5,20 +5,24 @@ Lookup, iterate, and search emojis.
 ### Features
 
 - Lookup up emoji by Unicode value.
-- Lookup up emoji by GitHub / Slack shortcode. (*not implemented yet*)
+- Lookup up emoji by GitHub shortcode.
 - Iterate over emojis in recommended order.
 - Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
 - Fuzzy search all emojis.
-- Base on the latest Unicode emoji spec (v13.1).
+- Based on the latest Unicode emoji spec (v13.1).
 
 ## Examples
 
 ```rust
-// lookup any emoji
+// lookup any emoji by Unicode value
 let face = emojis::lookup("🤨").unwrap();
+// or GitHub shortcode
+let face = emojis::lookup_shortcode("raised_eyebrow").unwrap();
+
 assert_eq!(face.as_str(), "\u{1F928}");
 assert_eq!(face.name(), "face with raised eyebrow");
 assert_eq!(face.group(), emojis::Group::SmileysAndEmotion);
+assert_eq!(face.shortcode().unwrap(), "raised_eyebrow");
 
 // iterate over all the emojis.
 let emoji = emojis::iter().next().unwrap();

@@ -40,6 +40,8 @@ type Lines<'a> = iter::Peekable<str::Lines<'a>>;
 fn fetch_emoji_data() -> Result<String> {
     let mut buf = Vec::new();
     let mut easy = curl::easy::Easy::new();
+    easy.fail_on_error(true)?;
+    easy.follow_location(true)?;
     easy.url(URL)?;
     {
         let mut transfer = easy.transfer();

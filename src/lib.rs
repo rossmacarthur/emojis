@@ -2,12 +2,16 @@
 //!
 //! # Examples
 //!
-//! Lookup any emoji.
+//! Lookup any emoji by Unicode value or GitHub shortcode.
 //! ```
 //! let face = emojis::lookup("🤨").unwrap();
+//! // Or
+//! let face = emojis::lookup_shortcode("raised_eyebrow").unwrap();
+//!
 //! assert_eq!(face.as_str(), "\u{1F928}");
 //! assert_eq!(face.name(), "face with raised eyebrow");
 //! assert_eq!(face.group(), emojis::Group::SmileysAndEmotion);
+//! assert_eq!(face.shortcode().unwrap(), "raised_eyebrow");
 //! ```
 //!
 //! Iterate over all the emojis.
@@ -54,6 +58,7 @@ pub struct Emoji {
     emoji: &'static str,
     name: &'static str,
     group: Group,
+    aliases: Option<&'static [&'static str]>,
 }
 
 impl Emoji {
@@ -97,6 +102,22 @@ impl Emoji {
     /// ```
     pub const fn group(&self) -> Group {
         self.group
+    }
+
+    /// Returns this emoji's GitHub shortcode.
+    ///
+    /// See [gemoji] for more information.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let thinking = emojis::lookup("🤔").unwrap();
+    /// assert_eq!(thinking.shortcode().unwrap(), "thinking");
+    /// ```
+    ///
+    /// [gemoji]: https://github.com/github/gemoji
+    pub fn shortcode(&self) -> Option<&str> {
+        self.aliases.and_then(|aliases| aliases.first().map(|&s| s))
     }
 }
 
@@ -152,12 +173,31 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 ///
 /// ```
 /// let rocket = emojis::lookup("🚀").unwrap();
-/// assert!(emojis::lookup("ʕっ•ᴥ•ʔっ").is_none());
+/// assert_eq!(rocket.shortcode(), Some("rocket"));
 /// ```
 pub fn lookup(emoji: &str) -> Option<Emoji> {
     crate::generated::EMOJIS
         .iter()
         .find(|&e| e == emoji)
+        .copied()
+}
+
+/// Lookup an emoji by GitHub shortcode.
+///
+/// # Examples
+///
+/// ```
+/// let rocket = emojis::lookup_shortcode("rocket").unwrap();
+/// assert_eq!(rocket, emojis::lookup("🚀").unwrap());
+/// ```
+pub fn lookup_shortcode(shortcode: &str) -> Option<Emoji> {
+    crate::generated::EMOJIS
+        .iter()
+        .find(|&e| {
+            e.aliases
+                .map(|aliases| aliases.contains(&shortcode))
+                .unwrap_or(false)
+        })
         .copied()
 }
 
