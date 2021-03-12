@@ -10,16 +10,13 @@ license = "MIT OR Apache-2.0"
 keywords = ["emoji", "search", "unicode"]
 categories = ["text-processing"]
 
-# See more at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-fuzzy-matcher = { version = "0.3.7", optional = true }
-itertools = { version = "0.10.0", optional = true }
+strsim = { version = "0.10.0", optional = true }
 
 [features]
-std = []
 default = ["search"]
-search = ["std", "fuzzy-matcher", "itertools"]
+std = []
+search = ["std", "strsim"]
 
 [workspace]
 members = ["generate"]

@@ -1,13 +1,53 @@
 #![cfg(feature = "search")]
 
-use std::cmp::Reverse;
-use std::prelude::v1::*;
-
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
+use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd, Reverse};
+use std::vec::Vec;
 
 use crate::Emoji;
+
+/// A similarity score.
+#[derive(Debug, Clone, Copy)]
+struct Score(f64);
+
+impl PartialEq for Score {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl Eq for Score {}
+
+impl PartialOrd for Score {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Score {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.partial_cmp(&other.0).unwrap()
+    }
+}
+
+fn similarity(a: &str, b: &str) -> Score {
+    Score(strsim::jaro(a, b))
+}
+
+fn emoji_score(emoji: &Emoji, query: &str) -> Option<Score> {
+    let mut scores = Vec::new();
+    scores.push(similarity(emoji.name(), query));
+    if let Some(aliases) = emoji.aliases {
+        for alias in aliases {
+            scores.push(similarity(alias, query))
+        }
+    }
+    let score = scores.into_iter().max().unwrap();
+    if score.0 > 0.8 {
+        Some(score)
+    } else {
+        None
+    }
+}
 
 /// Search all emojis.
 ///
@@ -20,24 +60,17 @@ use crate::Emoji;
 /// ```
 /// let mut iter = emojis::search("star");
 /// assert_eq!(iter.next().unwrap(), "⭐");
-/// assert_eq!(iter.next().unwrap(), "🤩");
-/// assert_eq!(iter.next().unwrap(), "✡️");
+/// assert_eq!(iter.next().unwrap(), "🌟");
+/// assert_eq!(iter.next().unwrap(), "🌠");
 /// ```
 pub fn search(query: &str) -> impl Iterator<Item = &'static Emoji> {
-    let matcher = SkimMatcherV2::default();
-    crate::generated::EMOJIS
+    let mut emojis: Vec<_> = crate::generated::EMOJIS
         .iter()
-        .filter_map(|emoji| {
-            matcher
-                .fuzzy_indices(emoji.name(), query)
-                .map(|(score, _)| (emoji, score))
-        })
-        .sorted_by_key(|(emoji, score)| {
-            // fuzzy-matcher doesn't seem to give exact matches a higher score
-            // so we do this to put iexact matches first.
-            let exact = emoji.name().to_lowercase() == query.to_lowercase();
-            (Reverse(exact), Reverse(*score), emoji.id)
-        })
+        .filter_map(|emoji| emoji_score(emoji, query).map(|s| (emoji, s)))
+        .collect();
+    emojis.sort_by_key(|(emoji, score)| (Reverse(*score), emoji.id));
+    emojis
+        .into_iter()
         .map(|(emoji, _)| emoji)
         .collect::<Vec<_>>()
         .into_iter()
