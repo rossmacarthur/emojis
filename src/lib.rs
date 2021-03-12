@@ -6,7 +6,7 @@
 //! ```
 //! let face = emojis::lookup("🤨").unwrap();
 //! // Or
-//! let face = emojis::lookup_shortcode("raised_eyebrow").unwrap();
+//! let face = emojis::lookup("raised_eyebrow").unwrap();
 //!
 //! assert_eq!(face.as_str(), "\u{1F928}");
 //! assert_eq!(face.name(), "face with raised eyebrow");
@@ -127,6 +127,12 @@ impl cmp::PartialEq<str> for Emoji {
     }
 }
 
+impl cmp::PartialEq<&str> for Emoji {
+    fn eq(&self, s: &&str) -> bool {
+        cmp::PartialEq::eq(self.as_str(), *s)
+    }
+}
+
 impl cmp::PartialOrd for Emoji {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         Some(cmp::Ord::cmp(self, other))
@@ -167,36 +173,25 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
     crate::generated::EMOJIS.iter()
 }
 
-/// Lookup an emoji by Unicode value.
+/// Lookup an emoji by Unicode value or shortcode.
 ///
 /// # Examples
 ///
 /// ```
 /// let rocket = emojis::lookup("🚀").unwrap();
 /// assert_eq!(rocket.shortcode(), Some("rocket"));
-/// ```
-pub fn lookup(emoji: &str) -> Option<Emoji> {
-    crate::generated::EMOJIS
-        .iter()
-        .find(|&e| e == emoji)
-        .copied()
-}
-
-/// Lookup an emoji by GitHub shortcode.
 ///
-/// # Examples
-///
+/// let rocket = emojis::lookup("rocket").unwrap();
+/// assert_eq!(rocket, "🚀");
 /// ```
-/// let rocket = emojis::lookup_shortcode("rocket").unwrap();
-/// assert_eq!(rocket, emojis::lookup("🚀").unwrap());
-/// ```
-pub fn lookup_shortcode(shortcode: &str) -> Option<Emoji> {
+pub fn lookup(query: &str) -> Option<Emoji> {
     crate::generated::EMOJIS
         .iter()
         .find(|&e| {
-            e.aliases
-                .map(|aliases| aliases.contains(&shortcode))
-                .unwrap_or(false)
+            e == query
+                || e.aliases
+                    .map(|aliases| aliases.contains(&query))
+                    .unwrap_or(false)
         })
         .copied()
 }

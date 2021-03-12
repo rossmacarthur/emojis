@@ -17,7 +17,7 @@ Lookup, iterate, and search emojis.
 // lookup any emoji by Unicode value
 let face = emojis::lookup("🤨").unwrap();
 // or GitHub shortcode
-let face = emojis::lookup_shortcode("raised_eyebrow").unwrap();
+let face = emojis::lookup("raised_eyebrow").unwrap();
 
 assert_eq!(face.as_str(), "\u{1F928}");
 assert_eq!(face.name(), "face with raised eyebrow");
