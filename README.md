@@ -1,6 +1,6 @@
 # emojis
 
-Lookup, iterate, and search emojis.
+Lookup, iterate over, and fuzzy search for emojis.
 
 ### Features
 

@@ -117,7 +117,7 @@ impl Emoji {
     ///
     /// [gemoji]: https://github.com/github/gemoji
     pub fn shortcode(&self) -> Option<&str> {
-        self.aliases.and_then(|aliases| aliases.first().map(|&s| s))
+        self.aliases.and_then(|aliases| aliases.first().copied())
     }
 }
 

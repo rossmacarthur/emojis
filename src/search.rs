@@ -52,8 +52,8 @@ fn emoji_score(emoji: &Emoji, query: &str) -> Option<Score> {
 /// Search all emojis.
 ///
 /// This function returns an iterator over emojis matching the given search
-/// query. The query is matched against the emoji CLDR short names and exact
-/// matches and higher scores are returned first.
+/// query. The query is matched against the emoji CLDR short names and gemoji
+/// shortcodes and the returned iterator is sorted with best scores first.
 ///
 /// # Examples
 ///
