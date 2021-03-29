@@ -1,6 +1,7 @@
 #![cfg(feature = "search")]
 
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd, Reverse};
+use std::vec;
 use std::vec::Vec;
 
 use crate::Emoji;
@@ -29,20 +30,20 @@ impl Ord for Score {
     }
 }
 
-fn similarity(a: &str, b: &str) -> Score {
-    Score(strsim::jaro(a, b))
+fn similarity(thing: &str, query: &str) -> Score {
+    let mul = if thing.starts_with(query) { 2. } else { 1. };
+    Score(mul * strsim::jaro(thing, query))
 }
 
 fn emoji_score(emoji: &Emoji, query: &str) -> Option<Score> {
-    let mut scores = Vec::new();
-    scores.push(similarity(emoji.name(), query));
+    let mut scores = vec![similarity(emoji.name(), query)];
     if let Some(aliases) = emoji.aliases {
         for alias in aliases {
             scores.push(similarity(alias, query))
         }
     }
     let score = scores.into_iter().max().unwrap();
-    if score.0 > 0.8 {
+    if score.0 > 0.75 {
         Some(score)
     } else {
         None
