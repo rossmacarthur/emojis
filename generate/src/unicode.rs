@@ -31,6 +31,8 @@ pub struct Emoji {
     chars: Vec<char>,
     status: Status,
     name: String,
+    variations: Vec<String>,
+    skin_tones: Vec<String>,
 }
 
 pub type ParsedData = IndexMap<String, IndexMap<String, Vec<Emoji>>>;
@@ -110,7 +112,7 @@ impl Emoji {
             .trim()
             .split(' ')
             .map(parse_code_point)
-            .collect::<Result<_>>()?;
+            .collect::<Result<Vec<_>>>()?;
         let status = match status.trim() {
             "fully-qualified" => Status::FullyQualified,
             "minimally-qualified" => Status::MinimallyQualified,
@@ -124,6 +126,8 @@ impl Emoji {
             chars,
             status,
             name,
+            variations: Vec::new(),
+            skin_tones: Vec::new(),
         })
     }
 
@@ -134,10 +138,19 @@ impl Emoji {
     pub fn emoji(&self) -> String {
         self.chars.iter().collect()
     }
+
+    pub fn variations(&self) -> &[String] {
+        &self.variations
+    }
+
+    pub fn skin_tones(&self) -> &[String] {
+        &self.skin_tones
+    }
 }
 
 fn parse_emoji_data(data: &str) -> Result<ParsedData> {
     let mut parsed_data = ParsedData::default();
+
     let mut lines = data.lines().peekable();
     while let Some(group) = lines.next_group() {
         while let Some(subgroup) = lines.next_subgroup() {
@@ -146,21 +159,49 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
                     break;
                 }
                 let emoji = Emoji::from_line(line)?;
-                if !matches!(emoji.status, Status::FullyQualified)
-                    || SKIN_TONES.iter().any(|c| emoji.chars.contains(c))
-                {
-                    continue;
-                }
                 let group = group.replace("&", "And").to_camel_case();
-                parsed_data
-                    .entry(group)
-                    .or_default()
-                    .entry(subgroup.clone())
-                    .or_insert_with(Vec::new)
-                    .push(emoji);
+
+                if matches!(emoji.status, Status::Component) {
+                    continue;
+                } else if matches!(
+                    emoji.status,
+                    Status::MinimallyQualified | Status::Unqualified
+                ) {
+                    parsed_data[&group][&subgroup]
+                        .iter_mut()
+                        .last()
+                        .with_context(|| {
+                            format!(
+                                "failed to find fully qualified variation for `{}`",
+                                emoji.name()
+                            )
+                        })?
+                        .variations
+                        .push(emoji.emoji());
+                } else if SKIN_TONES.iter().any(|c| emoji.chars.contains(c)) {
+                    parsed_data[&group][&subgroup]
+                        .iter_mut()
+                        .last()
+                        .with_context(|| {
+                            format!(
+                                "failed to find default skin tone variation for `{}`",
+                                emoji.name()
+                            )
+                        })?
+                        .skin_tones
+                        .push(emoji.emoji());
+                } else {
+                    parsed_data
+                        .entry(group)
+                        .or_default()
+                        .entry(subgroup.clone())
+                        .or_insert_with(Vec::new)
+                        .push(emoji);
+                }
             }
         }
     }
+
     Ok(parsed_data)
 }
 

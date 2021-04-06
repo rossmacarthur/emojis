@@ -20,6 +20,51 @@ fn generate_group_enum(unicode_data: &unicode::ParsedData) -> String {
     group
 }
 
+fn generate_emoji_struct(
+    github_data: &github::ParsedData,
+    id: usize,
+    group: &str,
+    emoji: &unicode::Emoji,
+) -> String {
+    let variations: Vec<_> = emoji
+        .variations()
+        .iter()
+        .map(|e| format!("\"{}\"", e))
+        .collect();
+
+    let skin_tones: Vec<_> = emoji
+        .skin_tones()
+        .iter()
+        .map(|e| format!("\"{}\"", e))
+        .collect();
+
+    match &github_data.get(&emoji.emoji()) {
+        Some(github) => {
+            format!(
+                "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: Some(&{:?}), variations: &[{}], skin_tones: &[{}] }},\n",
+                id,
+                emoji.emoji(),
+                emoji.name(),
+                group,
+                github.aliases(),
+                variations.join(", "),
+                skin_tones.join(", "),
+            )
+        }
+        None => {
+            format!(
+                "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: None, variations: &[{}], skin_tones: &[{}] }},\n",
+                id,
+                emoji.emoji(),
+                emoji.name(),
+                group,
+                variations.join(", "),
+                skin_tones.join(", "),
+            )
+        }
+    }
+}
+
 fn generate_emojis_array(
     unicode_data: &unicode::ParsedData,
     github_data: &github::ParsedData,
@@ -30,29 +75,8 @@ fn generate_emojis_array(
     for (group, subgroups) in unicode_data {
         for subgroup in subgroups.values() {
             for emoji in subgroup {
-                let line = match &github_data.get(&emoji.emoji()) {
-                    Some(github) => {
-                        format!(
-                            "    Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: Some(&{:?}) }},\n",
-                            id,
-                            emoji.emoji(),
-                            emoji.name(),
-                            group,
-                            github.aliases(),
-                        )
-                    }
-                    None => {
-                        format!(
-                            "    Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: None }},\n",
-                            id,
-                            emoji.emoji(),
-                            emoji.name(),
-                            group,
-                        )
-                    }
-                };
-                emojis.push_str(&line);
-
+                emojis.push_str("    ");
+                emojis.push_str(&generate_emoji_struct(github_data, id, group, emoji));
                 id += 1;
             }
         }

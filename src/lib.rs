@@ -59,6 +59,8 @@ pub struct Emoji {
     name: &'static str,
     group: Group,
     aliases: Option<&'static [&'static str]>,
+    variations: &'static [&'static str],
+    skin_tones: &'static [&'static str],
 }
 
 impl Emoji {
@@ -189,6 +191,8 @@ pub fn lookup(query: &str) -> Option<Emoji> {
         .iter()
         .find(|&e| {
             e == query
+                || e.variations.contains(&query)
+                || e.skin_tones.contains(&query)
                 || e.aliases
                     .map(|aliases| aliases.contains(&query))
                     .unwrap_or(false)
@@ -226,5 +230,15 @@ mod tests {
         assert!(grinning_face < winking_face);
         assert!(winking_face > grinning_face);
         assert!(grinning_face == grinning_face);
+    }
+
+    #[test]
+    fn lookup_variation() {
+        assert_eq!(lookup("☹"), lookup("☹️"));
+    }
+
+    #[test]
+    fn lookup_skin_tone() {
+        assert_eq!(lookup("🙏🏽"), lookup("🙏"));
     }
 }
