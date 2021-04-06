@@ -229,7 +229,7 @@ mod tests {
         let winking_face = lookup("😉");
         assert!(grinning_face < winking_face);
         assert!(winking_face > grinning_face);
-        assert!(grinning_face == grinning_face);
+        assert_eq!(grinning_face, lookup("😀"));
     }
 
     #[test]

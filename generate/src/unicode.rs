@@ -93,7 +93,7 @@ impl LinesExt for Lines<'_> {
 
 fn parse_code_point(code_point: &str) -> Result<char> {
     let scalar = u32::from_str_radix(code_point, 16).context("not hex")?;
-    Ok(std::char::from_u32(scalar).context("not Unicode scalar value")?)
+    std::char::from_u32(scalar).context("not Unicode scalar value")
 }
 
 impl Emoji {
