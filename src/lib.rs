@@ -41,6 +41,7 @@ mod search;
 
 use core::cmp;
 use core::convert;
+use core::fmt;
 use core::ops;
 
 pub use crate::generated::Group;
@@ -153,6 +154,12 @@ impl convert::AsRef<str> for Emoji {
     }
 }
 
+impl fmt::Display for Emoji {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self.as_str(), f)
+    }
+}
+
 impl ops::Deref for Emoji {
     type Target = str;
 
@@ -223,6 +230,8 @@ mod generated;
 mod tests {
     use super::*;
 
+    use core::fmt::Write;
+
     #[test]
     fn emoji_ordering() {
         let grinning_face = lookup("😀");
@@ -233,6 +242,14 @@ mod tests {
     }
 
     #[test]
+    fn emoji_display() {
+        let mut buf = String::<[u8; 4]>::default();
+        let grinning_face = lookup("😀").unwrap();
+        write!(buf, "{}", grinning_face).unwrap();
+        assert_eq!(buf.as_str(), "😀");
+    }
+
+    #[test]
     fn lookup_variation() {
         assert_eq!(lookup("☹"), lookup("☹️"));
     }
@@ -240,5 +257,33 @@ mod tests {
     #[test]
     fn lookup_skin_tone() {
         assert_eq!(lookup("🙏🏽"), lookup("🙏"));
+    }
+
+    // Test utilities
+
+    /// A stack allocated string that supports formatting.
+    #[derive(Default)]
+    struct String<T> {
+        buf: T,
+        pos: usize,
+    }
+
+    impl<const N: usize> String<[u8; N]> {
+        fn as_str(&self) -> &str {
+            core::str::from_utf8(&self.buf[..self.pos]).unwrap()
+        }
+    }
+
+    impl<const N: usize> fmt::Write for String<[u8; N]> {
+        fn write_str(&mut self, s: &str) -> fmt::Result {
+            let bytes = s.as_bytes();
+            let end = self.pos + bytes.len();
+            if end > self.buf.len() {
+                panic!("buffer overflow");
+            }
+            self.buf[self.pos..end].copy_from_slice(bytes);
+            self.pos = end;
+            Ok(())
+        }
     }
 }
