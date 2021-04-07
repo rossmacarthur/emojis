@@ -2,6 +2,9 @@
 
 use crate::Emoji;
 
+/// A category for an emoji.
+///
+/// Based on Unicode CLDR data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Group {
    SmileysAndEmotion,

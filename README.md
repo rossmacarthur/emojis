@@ -4,7 +4,7 @@
 [![Docs.rs Latest](https://img.shields.io/badge/docs.rs-latest-blue.svg)](https://docs.rs/emojis)
 [![Build Status](https://img.shields.io/github/workflow/status/rossmacarthur/emojis/build/trunk)](https://github.com/rossmacarthur/emojis/actions?query=workflow%3Abuild)
 
-Lookup, iterate over, and fuzzy search for emojis.
+✨ Lookup, iterate over, and fuzzy search for emojis.
 
 ### Features
 

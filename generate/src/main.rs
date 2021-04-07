@@ -8,6 +8,9 @@ use anyhow::Result;
 
 fn generate_group_enum(unicode_data: &unicode::ParsedData) -> String {
     let mut group = String::new();
+    group.push_str("/// A category for an emoji.\n");
+    group.push_str("///\n");
+    group.push_str("/// Based on Unicode CLDR data.\n");
     group.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
     group.push_str("pub enum Group {\n");
     for name in unicode_data.keys() {
