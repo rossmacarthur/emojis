@@ -31,7 +31,6 @@
 use core::cmp;
 use core::convert;
 use core::fmt;
-use core::ops;
 
 pub use crate::generated::Group;
 
@@ -52,10 +51,6 @@ pub struct Emoji {
 
 impl Emoji {
     /// Returns this emoji as a string.
-    ///
-    /// Note: `Emoji` also implements [`Deref`](#impl-Deref) to [`str`], and
-    /// [`AsRef<str>`](#impl-AsRef<str>) so this method shouldn't have to be
-    /// used very frequently.
     ///
     /// # Examples
     ///
@@ -143,14 +138,6 @@ impl convert::AsRef<str> for Emoji {
 impl fmt::Display for Emoji {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
-    }
-}
-
-impl ops::Deref for Emoji {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        self.as_str()
     }
 }
 
