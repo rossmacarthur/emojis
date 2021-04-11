@@ -28,6 +28,8 @@
 
 #![no_std]
 
+mod generated;
+
 use core::cmp;
 use core::convert;
 use core::fmt;
@@ -166,18 +168,15 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 /// let rocket = emojis::lookup("rocket").unwrap();
 /// assert_eq!(rocket, "🚀");
 /// ```
-pub fn lookup(query: &str) -> Option<Emoji> {
-    crate::generated::EMOJIS
-        .iter()
-        .find(|&e| {
-            e == query
-                || e.variations.contains(&query)
-                || e.skin_tones.contains(&query)
-                || e.aliases
-                    .map(|aliases| aliases.contains(&query))
-                    .unwrap_or(false)
-        })
-        .copied()
+pub fn lookup(query: &str) -> Option<&'static Emoji> {
+    crate::generated::EMOJIS.iter().find(|&e| {
+        e == query
+            || e.variations.contains(&query)
+            || e.skin_tones.contains(&query)
+            || e.aliases
+                .map(|aliases| aliases.contains(&query))
+                .unwrap_or(false)
+    })
 }
 
 impl Group {
@@ -197,13 +196,16 @@ impl Group {
     }
 }
 
-mod generated;
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use core::fmt::Write;
+
+    #[test]
+    fn emoji_partial_eq_str() {
+        assert_eq!(lookup("😀").unwrap(), "😀");
+    }
 
     #[test]
     fn emoji_ordering() {
