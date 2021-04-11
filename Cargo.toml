@@ -3,20 +3,12 @@ name = "emojis"
 version = "0.1.2"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
-description = "✨ Lookup, iterate over, and fuzzy search for emojis."
+description = "✨ Lookup and iterate over emoji names, shortcodes, and groups."
 readme = "README.md"
 repository = "https://github.com/rossmacarthur/emojis"
 license = "MIT OR Apache-2.0"
 keywords = ["emoji", "search", "unicode"]
 categories = ["text-processing", "no-std"]
-
-[dependencies]
-strsim = { version = "0.10.0", optional = true }
-
-[features]
-default = ["search"]
-std = []
-search = ["std", "strsim"]
 
 [workspace]
 members = ["generate"]

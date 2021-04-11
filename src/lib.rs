@@ -1,4 +1,4 @@
-//! ✨ Lookup, iterate over, and fuzzy search for emojis.
+//! ✨ Lookup and iterate over emoji names, shortcodes, and groups.
 //!
 //! # Examples
 //!
@@ -25,19 +25,8 @@
 //! let emoji = emojis::Group::FoodAndDrink.emojis().next().unwrap();
 //! assert_eq!(emoji, "🍇");
 //! ```
-//!
-//! Fuzzy search for emojis.
-//! ```
-//! let emoji = emojis::search("rket").next().unwrap();
-//! assert_eq!(emoji, "🚀");
-//! ```
 
 #![no_std]
-
-#[cfg(feature = "std")]
-extern crate std;
-
-mod search;
 
 use core::cmp;
 use core::convert;
@@ -45,9 +34,6 @@ use core::fmt;
 use core::ops;
 
 pub use crate::generated::Group;
-
-#[cfg(feature = "search")]
-pub use crate::search::search;
 
 /// Represents an emoji.
 ///

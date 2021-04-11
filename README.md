@@ -4,7 +4,7 @@
 [![Docs.rs Latest](https://img.shields.io/badge/docs.rs-latest-blue.svg)](https://docs.rs/emojis)
 [![Build Status](https://img.shields.io/github/workflow/status/rossmacarthur/emojis/build/trunk)](https://github.com/rossmacarthur/emojis/actions?query=workflow%3Abuild)
 
-✨ Lookup, iterate over, and fuzzy search for emojis.
+✨ Lookup and iterate over emoji names, shortcodes, and groups.
 
 ### Features
 
@@ -12,7 +12,6 @@
 - Lookup up emoji by GitHub shortcode.
 - Iterate over emojis in recommended order.
 - Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
-- Fuzzy search all emojis.
 - Based on the latest Unicode emoji spec (v13.1).
 
 ## Examples
@@ -35,10 +34,6 @@ assert_eq!(emoji, "😀");
 // iterate over all the emojis in a group.
 let emoji = emojis::Group::FoodAndDrink.emojis().next().unwrap();
 assert_eq!(emoji, "🍇");
-
-// fuzzy search for emojis.
-let emoji = emojis::search("rket").next().unwrap();
-assert_eq!(emoji, "🚀");
 ```
 
 ## License
