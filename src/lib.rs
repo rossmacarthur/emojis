@@ -4,14 +4,15 @@
 //!
 //! Lookup any emoji by Unicode value or GitHub shortcode.
 //! ```
-//! let face = emojis::lookup("🤨").unwrap();
+//! let hand = emojis::lookup("🤌").unwrap();
 //! // Or
-//! let face = emojis::lookup("raised_eyebrow").unwrap();
+//! let hand = emojis::lookup("pinched_fingers").unwrap();
 //!
-//! assert_eq!(face.as_str(), "\u{1F928}");
-//! assert_eq!(face.name(), "face with raised eyebrow");
-//! assert_eq!(face.group(), emojis::Group::SmileysAndEmotion);
-//! assert_eq!(face.shortcode().unwrap(), "raised_eyebrow");
+//! assert_eq!(hand.as_str(), "\u{1f90c}");
+//! assert_eq!(hand.name(), "pinched fingers");
+//! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
+//! assert_eq!(hand.shortcode().unwrap(), "pinched_fingers");
+//! assert_eq!(hand.skin_tone().unwrap(), emojis::SkinTone::Default);
 //! ```
 //!
 //! Iterate over all the emojis.
@@ -31,8 +32,8 @@
 //! ```
 //! let raised_hands = emojis::lookup("🙌🏼").unwrap();
 //! let iter = raised_hands.skin_tones().unwrap();
-//! let tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
-//! assert_eq!(tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
+//! let skin_tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
+//! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 //! ```
 
 #![no_std]

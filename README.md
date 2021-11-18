@@ -13,34 +13,34 @@
 - Iterate over emojis in recommended order.
 - Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
 - Iterate over the skin tones for an emoji.
-- Based on the latest Unicode emoji spec (v13.1).
+- Uses Unicode emoji spec (v13.1).
 
 ## Examples
 
 ```rust
-// lookup any emoji by Unicode value
-let face = emojis::lookup("🤨")?;
-// or GitHub shortcode
-let face = emojis::lookup("raised_eyebrow")?;
+let hand = emojis::lookup("🤌")?;
+// Or
+let hand = emojis::lookup("pinched_fingers")?;
 
-assert_eq!(face.as_str(), "\u{1F928}");
-assert_eq!(face.name(), "face with raised eyebrow");
-assert_eq!(face.group(), emojis::Group::SmileysAndEmotion);
-assert_eq!(face.shortcode()?, "raised_eyebrow");
+assert_eq!(hand.as_str(), "\u{1f90c}");
+assert_eq!(hand.name(), "pinched fingers");
+assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
+assert_eq!(hand.shortcode()?, "pinched_fingers");
+assert_eq!(hand.skin_tone()?, emojis::SkinTone::Default);
 
-// iterate over all the emojis
+// iterate over all the emojis.
 let smiley = emojis::iter().next()?;
 assert_eq!(smiley, "😀");
 
-// iterate over all the emojis in a group
+// iterate over all the emojis in a group.
 let grapes = emojis::Group::FoodAndDrink.emojis().next()?;
 assert_eq!(grapes, "🍇");
 
-// iterate over the skin tones for an emoji
+// iterate over the skin tones for an emoji.
 let raised_hands = emojis::lookup("🙌🏼")?;
 let iter = raised_hands.skin_tones()?;
-let tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
-assert_eq!(tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
+let skin_tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
+assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 ```
 
 ## License
