@@ -6,19 +6,10 @@ use std::str;
 use anyhow::{bail, Context, Result};
 use heck::CamelCase;
 use indexmap::IndexMap;
-use itertools::Itertools;
 
 const URL: &str = "https://unicode.org/Public/emoji/13.1/emoji-test.txt";
 
-const SKIN_TONES: &[char] = &[
-    '\u{1f3fb}', // light skin tone
-    '\u{1f3fc}', // medium-light skin tone
-    '\u{1f3fd}', // medium skin tone
-    '\u{1f3fe}', // medium-dark skin tone
-    '\u{1f3ff}', // dark skin tone
-];
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Status {
     FullyQualified,
     MinimallyQualified,
@@ -26,13 +17,23 @@ pub enum Status {
     Component,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SkinTone {
+    Default,
+    Light,
+    MediumLight,
+    Medium,
+    MediumDark,
+    Dark,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Emoji {
-    chars: Vec<char>,
-    status: Status,
+    emoji: String,
     name: String,
+    status: Status,
+    skin_tone: Option<SkinTone>,
     variations: Vec<String>,
-    skin_tones: Vec<String>,
 }
 
 pub type ParsedData = IndexMap<String, IndexMap<String, Vec<Emoji>>>;
@@ -96,23 +97,41 @@ fn parse_code_point(code_point: &str) -> Result<char> {
     std::char::from_u32(scalar).context("not Unicode scalar value")
 }
 
+impl SkinTone {
+    fn tones() -> impl Iterator<Item = Self> {
+        IntoIterator::into_iter([
+            Self::Light,
+            Self::MediumLight,
+            Self::Medium,
+            Self::MediumDark,
+            Self::Dark,
+        ])
+    }
+
+    fn code_point(&self) -> char {
+        match self {
+            Self::Default => unreachable!(),
+            Self::Light => '\u{1f3fb}',
+            Self::MediumLight => '\u{1f3fc}',
+            Self::Medium => '\u{1f3fd}',
+            Self::MediumDark => '\u{1f3fe}',
+            Self::Dark => '\u{1f3ff}',
+        }
+    }
+}
+
 impl Emoji {
     fn from_line(line: &str) -> Result<Self> {
-        let (code_points, rest) = line
-            .splitn(2, ';')
-            .next_tuple()
-            .context("expected code points")?;
-        let (status, rest) = rest
-            .splitn(2, '#')
-            .next_tuple()
-            .context("expected status")?;
+        let (code_points, rest) = line.split_once(';').context("expected code points")?;
+        let (status, rest) = rest.split_once('#').context("expected status")?;
         let name = rest.trim().splitn(3, ' ').nth(2).context("expected name")?;
 
-        let chars = code_points
+        let emoji: String = code_points
             .trim()
             .split(' ')
             .map(parse_code_point)
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<_>>()?;
+        let name = name.trim().to_owned();
         let status = match status.trim() {
             "fully-qualified" => Status::FullyQualified,
             "minimally-qualified" => Status::MinimallyQualified,
@@ -120,83 +139,94 @@ impl Emoji {
             "component" => Status::Component,
             s => bail!("unrecognized status `{}`", s),
         };
-        let name = name.trim().to_owned();
+        let skin_tone = emoji.chars().find_map(|c| {
+            SkinTone::tones().find_map(|tone| (tone.code_point() == c).then(|| tone))
+        });
 
         Ok(Self {
-            chars,
-            status,
+            emoji,
             name,
+            status,
+            skin_tone,
             variations: Vec::new(),
-            skin_tones: Vec::new(),
         })
+    }
+
+    pub fn as_string(&self) -> &String {
+        &self.emoji
     }
 
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn emoji(&self) -> String {
-        self.chars.iter().collect()
+    pub fn skin_tone(&self) -> Option<SkinTone> {
+        self.skin_tone
     }
 
     pub fn variations(&self) -> &[String] {
         &self.variations
     }
-
-    pub fn skin_tones(&self) -> &[String] {
-        &self.skin_tones
-    }
 }
 
 fn parse_emoji_data(data: &str) -> Result<ParsedData> {
     let mut parsed_data = ParsedData::default();
-
     let mut lines = data.lines().peekable();
     while let Some(group) = lines.next_group() {
+        let group = group.replace("&", "And").to_camel_case();
         while let Some(subgroup) = lines.next_subgroup() {
             for line in &mut lines {
                 if line.is_empty() {
                     break;
                 }
                 let emoji = Emoji::from_line(line)?;
-                let group = group.replace("&", "And").to_camel_case();
 
-                if matches!(emoji.status, Status::Component) {
-                    continue;
-                } else if matches!(
-                    emoji.status,
-                    Status::MinimallyQualified | Status::Unqualified
-                ) {
-                    parsed_data[&group][&subgroup]
-                        .iter_mut()
-                        .last()
-                        .with_context(|| {
-                            format!(
-                                "failed to find fully qualified variation for `{}`",
-                                emoji.name()
-                            )
-                        })?
-                        .variations
-                        .push(emoji.emoji());
-                } else if SKIN_TONES.iter().any(|c| emoji.chars.contains(c)) {
-                    parsed_data[&group][&subgroup]
-                        .iter_mut()
-                        .last()
-                        .with_context(|| {
-                            format!(
-                                "failed to find default skin tone variation for `{}`",
-                                emoji.name()
-                            )
-                        })?
-                        .skin_tones
-                        .push(emoji.emoji());
-                } else {
-                    parsed_data
-                        .entry(group)
-                        .or_default()
-                        .entry(subgroup.clone())
-                        .or_insert_with(Vec::new)
-                        .push(emoji);
+                let ctx = || {
+                    format!(
+                        "failed to find fully qualified variation for `{}`",
+                        emoji.name()
+                    )
+                };
+
+                match emoji.status {
+                    Status::Component => continue,
+
+                    Status::MinimallyQualified | Status::Unqualified => {
+                        // find fully qualified variation
+                        parsed_data[&group][&subgroup]
+                            .iter_mut()
+                            .last()
+                            .with_context(ctx)?
+                            .variations
+                            .push(emoji.emoji);
+                    }
+
+                    Status::FullyQualified => {
+                        match emoji.skin_tone {
+                            Some(SkinTone::Default) | None => {
+                                // normal emoji, simply add
+                            }
+                            Some(_) => {
+                                // this emoji has a skin tone we need to find
+                                // the default skin tone variation and set it
+                                parsed_data[&group][&subgroup]
+                                    .iter_mut()
+                                    .rev()
+                                    .find(|emoji| {
+                                        matches!(emoji.skin_tone, Some(SkinTone::Default) | None)
+                                    })
+                                    .with_context(ctx)?
+                                    .skin_tone = Some(SkinTone::Default);
+                            }
+                        }
+
+                        parsed_data
+                            .entry(group.clone())
+                            .or_default()
+                            .entry(subgroup.clone())
+                            .or_insert_with(Vec::new)
+                            .push(emoji);
+                    }
                 }
             }
         }

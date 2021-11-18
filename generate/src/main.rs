@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 
+use crate::unicode::SkinTone;
+
 fn generate_group_enum(unicode_data: &unicode::ParsedData) -> String {
     let mut group = String::new();
     group.push_str("/// A category for an emoji.\n");
@@ -28,44 +30,29 @@ fn generate_emoji_struct(
     id: usize,
     group: &str,
     emoji: &unicode::Emoji,
+    default_skin_tone_id: usize,
 ) -> String {
-    let variations: Vec<_> = emoji
-        .variations()
-        .iter()
-        .map(|e| format!("\"{}\"", e))
-        .collect();
-
-    let skin_tones: Vec<_> = emoji
-        .skin_tones()
-        .iter()
-        .map(|e| format!("\"{}\"", e))
-        .collect();
-
-    match &github_data.get(&emoji.emoji()) {
-        Some(github) => {
-            format!(
-                "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: Some(&{:?}), variations: &[{}], skin_tones: &[{}] }},\n",
-                id,
-                emoji.emoji(),
-                emoji.name(),
-                group,
-                github.aliases(),
-                variations.join(", "),
-                skin_tones.join(", "),
-            )
-        }
-        None => {
-            format!(
-                "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}, aliases: None, variations: &[{}], skin_tones: &[{}] }},\n",
-                id,
-                emoji.emoji(),
-                emoji.name(),
-                group,
-                variations.join(", "),
-                skin_tones.join(", "),
-            )
-        }
+    let variations = emoji.variations().to_vec();
+    let mut s = format!(
+        "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}",
+        id,
+        emoji.as_string(),
+        emoji.name(),
+        group,
+    );
+    match emoji.skin_tone() {
+        Some(tone) => s.push_str(&format!(
+            ", skin_tone: Some(({}, SkinTone::{:?}))",
+            default_skin_tone_id, tone
+        )),
+        None => s.push_str(", skin_tone: None"),
     }
+    match &github_data.get(emoji.as_string()) {
+        Some(github) => s.push_str(&format!(", aliases: Some(&{:?})", github.aliases())),
+        None => s.push_str(", aliases: None"),
+    }
+    s.push_str(&format!(", variations: &{:?} }}", variations));
+    s
 }
 
 fn generate_emojis_array(
@@ -73,13 +60,23 @@ fn generate_emojis_array(
     github_data: &github::ParsedData,
 ) -> String {
     let mut id = 0;
-    let mut emojis = String::new();
-    emojis.push_str("pub const EMOJIS: &[Emoji] = &[\n");
+    let mut default_skin_tone_id = 0;
+    let mut emojis = String::from("pub const EMOJIS: &[Emoji] = &[\n");
     for (group, subgroups) in unicode_data {
         for subgroup in subgroups.values() {
             for emoji in subgroup {
+                if matches!(emoji.skin_tone(), Some(SkinTone::Default)) {
+                    default_skin_tone_id = id;
+                }
                 emojis.push_str("    ");
-                emojis.push_str(&generate_emoji_struct(github_data, id, group, emoji));
+                emojis.push_str(&generate_emoji_struct(
+                    github_data,
+                    id,
+                    group,
+                    emoji,
+                    default_skin_tone_id,
+                ));
+                emojis.push_str(",\n");
                 id += 1;
             }
         }
@@ -91,7 +88,7 @@ fn generate_emojis_array(
 fn generate(unicode_data: unicode::ParsedData, github_data: github::ParsedData) -> String {
     let mut module = String::new();
     module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
-    module.push_str("use crate::Emoji;\n\n");
+    module.push_str("use crate::{Emoji, SkinTone};\n\n");
     module.push_str(&generate_group_enum(&unicode_data));
     module.push_str(&generate_emojis_array(&unicode_data, &github_data));
     module

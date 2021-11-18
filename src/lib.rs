@@ -16,17 +16,29 @@
 //!
 //! Iterate over all the emojis.
 //! ```
-//! let emoji = emojis::iter().next().unwrap();
-//! assert_eq!(emoji, "😀");
+//! let smiley = emojis::iter().next().unwrap();
+//! assert_eq!(smiley, "😀");
 //! ```
 //!
 //! Iterate over all the emojis in a group.
 //! ```
-//! let emoji = emojis::Group::FoodAndDrink.emojis().next().unwrap();
-//! assert_eq!(emoji, "🍇");
+//! let grapes = emojis::Group::FoodAndDrink.emojis().next().unwrap();
+//! assert_eq!(grapes, "🍇");
+//! ```
+//!
+//! Iterate over the skin tones for an emoji.
+//!
+//! ```
+//! let raised_hands = emojis::lookup("🙌🏼").unwrap();
+//! let iter = raised_hands.skin_tones().unwrap();
+//! let tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
+//! assert_eq!(tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 //! ```
 
 #![no_std]
+
+#[cfg(test)]
+extern crate alloc;
 
 mod generated;
 
@@ -42,13 +54,24 @@ pub use crate::generated::Group;
 /// more information.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Emoji {
-    id: usize,
+    id: u16,
     emoji: &'static str,
     name: &'static str,
     group: Group,
+    skin_tone: Option<(u16, SkinTone)>,
     aliases: Option<&'static [&'static str]>,
     variations: &'static [&'static str],
-    skin_tones: &'static [&'static str],
+}
+
+/// Represents the skin tone of an emoji.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SkinTone {
+    Default,
+    Light,
+    MediumLight,
+    Medium,
+    MediumDark,
+    Dark,
 }
 
 impl Emoji {
@@ -90,6 +113,80 @@ impl Emoji {
         self.group
     }
 
+    /// Returns the skin tone of this emoji.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::SkinTone;
+    ///
+    /// let peace = emojis::lookup("✌️").unwrap();
+    /// assert_eq!(peace.skin_tone(), Some(SkinTone::Default));
+    ///
+    /// let peace = emojis::lookup("✌🏽").unwrap();
+    /// assert_eq!(peace.skin_tone(), Some(SkinTone::Medium));
+    /// ```
+    ///
+    /// For emojis where skin tones are not applicable this will be `None`.
+    ///
+    /// ```
+    /// let cool = emojis::lookup("😎").unwrap();
+    /// assert!(cool.skin_tone().is_none());
+    /// ```
+    pub fn skin_tone(&self) -> Option<SkinTone> {
+        self.skin_tone.map(|(_, v)| v)
+    }
+
+    /// Returns an iterator over the emoji and all the related skin tone emojis.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::Emoji;
+    ///
+    /// let luck = emojis::lookup("🤞🏼").unwrap();
+    /// let tones: Vec<_> = luck.skin_tones().unwrap().map(Emoji::as_str).collect();
+    /// assert_eq!(tones, ["🤞", "🤞🏻", "🤞🏼", "🤞🏽", "🤞🏾", "🤞🏿"]);
+    /// ```
+    ///
+    /// For emojis where skin tones are not applicable this will return `None`.
+    ///
+    /// ```
+    /// let cool = emojis::lookup("😎").unwrap();
+    /// assert!(cool.skin_tones().is_none());
+    /// ```
+    pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
+        let (id, _) = self.skin_tone?;
+        Some(crate::generated::EMOJIS[id as usize..].iter().take(6))
+    }
+
+    /// Returns a version of this emoji that has the given skin tone.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::SkinTone;
+    ///
+    /// let peace = emojis::lookup("🙌🏼")
+    ///     .unwrap()
+    ///     .with_skin_tone(SkinTone::MediumDark)
+    ///     .unwrap();
+    /// assert_eq!(peace, emojis::lookup("🙌🏾").unwrap());
+    /// ```
+    ///
+    /// For emojis where skin tones are not applicable this will be `None`.
+    ///
+    /// ```
+    /// use emojis::SkinTone;
+    ///
+    /// let cool = emojis::lookup("😎").unwrap();
+    /// assert!(cool.with_skin_tone(SkinTone::Medium).is_none());
+    /// ```
+    pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&'static Self> {
+        self.skin_tones()?
+            .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
+    }
+
     /// Returns this emoji's GitHub shortcode.
     ///
     /// See [gemoji] for more information.
@@ -119,18 +216,6 @@ impl cmp::PartialEq<&str> for Emoji {
     }
 }
 
-impl cmp::PartialOrd for Emoji {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(cmp::Ord::cmp(self, other))
-    }
-}
-
-impl cmp::Ord for Emoji {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        cmp::Ord::cmp(&self.id, &other.id)
-    }
-}
-
 impl convert::AsRef<str> for Emoji {
     fn as_ref(&self) -> &str {
         self.as_str()
@@ -145,7 +230,8 @@ impl fmt::Display for Emoji {
 
 /// Returns an iterator over all emojis.
 ///
-/// Ordered by Unicode CLDR data.
+/// - Ordered by Unicode CLDR data.
+/// - Excludes skin tones.
 ///
 /// # Examples
 ///
@@ -154,7 +240,9 @@ impl fmt::Display for Emoji {
 /// assert_eq!(iter.next().unwrap(), "😀");
 /// ```
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
-    crate::generated::EMOJIS.iter()
+    crate::generated::EMOJIS
+        .iter()
+        .filter(|emoji| emoji.skin_tone().is_none())
 }
 
 /// Lookup an emoji by Unicode value or shortcode.
@@ -163,7 +251,7 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 ///
 /// ```
 /// let rocket = emojis::lookup("🚀").unwrap();
-/// assert_eq!(rocket.shortcode(), Some("rocket"));
+/// assert_eq!(rocket.shortcode().unwrap(), "rocket");
 ///
 /// let rocket = emojis::lookup("rocket").unwrap();
 /// assert_eq!(rocket, "🚀");
@@ -172,7 +260,6 @@ pub fn lookup(query: &str) -> Option<&'static Emoji> {
     crate::generated::EMOJIS.iter().find(|&e| {
         e == query
             || e.variations.contains(&query)
-            || e.skin_tones.contains(&query)
             || e.aliases
                 .map(|aliases| aliases.contains(&query))
                 .unwrap_or(false)
@@ -200,7 +287,8 @@ impl Group {
 mod tests {
     use super::*;
 
-    use core::fmt::Write;
+    use alloc::format;
+    use alloc::vec::Vec;
 
     #[test]
     fn emoji_partial_eq_str() {
@@ -208,19 +296,8 @@ mod tests {
     }
 
     #[test]
-    fn emoji_ordering() {
-        let grinning_face = lookup("😀");
-        let winking_face = lookup("😉");
-        assert!(grinning_face < winking_face);
-        assert!(winking_face > grinning_face);
-        assert_eq!(grinning_face, lookup("😀"));
-    }
-
-    #[test]
     fn emoji_display() {
-        let mut buf = String::<[u8; 4]>::default();
-        let grinning_face = lookup("😀").unwrap();
-        write!(buf, "{}", grinning_face).unwrap();
+        let buf = format!("{}", lookup("😀").unwrap());
         assert_eq!(buf.as_str(), "😀");
     }
 
@@ -230,35 +307,30 @@ mod tests {
     }
 
     #[test]
-    fn lookup_skin_tone() {
-        assert_eq!(lookup("🙏🏽"), lookup("🙏"));
-    }
-
-    // Test utilities
-
-    /// A stack allocated string that supports formatting.
-    #[derive(Default)]
-    struct String<T> {
-        buf: T,
-        pos: usize,
-    }
-
-    impl<const N: usize> String<[u8; N]> {
-        fn as_str(&self) -> &str {
-            core::str::from_utf8(&self.buf[..self.pos]).unwrap()
-        }
-    }
-
-    impl<const N: usize> fmt::Write for String<[u8; N]> {
-        fn write_str(&mut self, s: &str) -> fmt::Result {
-            let bytes = s.as_bytes();
-            let end = self.pos + bytes.len();
-            if end > self.buf.len() {
-                panic!("buffer overflow");
+    fn skin_tones() {
+        let skin_tones = [
+            SkinTone::Default,
+            SkinTone::Light,
+            SkinTone::MediumLight,
+            SkinTone::Medium,
+            SkinTone::MediumDark,
+            SkinTone::Dark,
+        ];
+        for emoji in iter() {
+            match emoji.skin_tone() {
+                Some(_) => {
+                    let emojis: Vec<_> = emoji.skin_tones().unwrap().collect();
+                    assert_eq!(emojis.len(), 6);
+                    let default = emojis[0];
+                    for (emoji, skin_tone) in emojis.into_iter().zip(skin_tones) {
+                        assert_eq!(emoji.skin_tone().unwrap(), skin_tone);
+                        assert_eq!(emoji.with_skin_tone(SkinTone::Default).unwrap(), default);
+                    }
+                }
+                None => {
+                    assert!(emoji.skin_tones().is_none());
+                }
             }
-            self.buf[self.pos..end].copy_from_slice(bytes);
-            self.pos = end;
-            Ok(())
         }
     }
 }

@@ -11,7 +11,6 @@ const URL: &str = "https://github.com/github/gemoji/raw/v4.0.0.rc2/db/emoji.json
 pub struct Emoji {
     emoji: String,
     aliases: Vec<String>,
-    tags: Vec<String>,
 }
 
 pub type ParsedData = HashMap<String, Emoji>;
