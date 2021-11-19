@@ -243,7 +243,7 @@ impl fmt::Display for Emoji {
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
     crate::generated::EMOJIS
         .iter()
-        .filter(|emoji| emoji.skin_tone().is_none())
+        .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
 }
 
 /// Lookup an emoji by Unicode value or shortcode.
@@ -308,6 +308,17 @@ mod tests {
     }
 
     #[test]
+    fn iter_only_default_skin_tones() {
+        assert!(iter().all(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None)));
+        assert_ne!(
+            iter()
+                .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default)))
+                .count(),
+            0
+        );
+    }
+
+    #[test]
     fn skin_tones() {
         let skin_tones = [
             SkinTone::Default,
@@ -323,8 +334,8 @@ mod tests {
                     let emojis: Vec<_> = emoji.skin_tones().unwrap().collect();
                     assert_eq!(emojis.len(), 6);
                     let default = emojis[0];
-                    for (emoji, skin_tone) in emojis.into_iter().zip(skin_tones) {
-                        assert_eq!(emoji.skin_tone().unwrap(), skin_tone);
+                    for (emoji, skin_tone) in emojis.iter().zip(skin_tones) {
+                        assert_eq!(emoji.skin_tone().unwrap(), skin_tone, "{:#?}", emojis);
                         assert_eq!(emoji.with_skin_tone(SkinTone::Default).unwrap(), default);
                     }
                 }
