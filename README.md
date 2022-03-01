@@ -13,7 +13,7 @@
 - Iterate over emojis in recommended order.
 - Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
 - Iterate over the skin tones for an emoji.
-- Uses Unicode emoji spec (v13.1).
+- Uses Unicode emoji spec (v14.0).
 
 ## Examples
 
@@ -24,6 +24,7 @@ let hand = emojis::lookup("pinched_fingers")?;
 
 assert_eq!(hand.as_str(), "\u{1f90c}");
 assert_eq!(hand.name(), "pinched fingers");
+assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 assert_eq!(hand.shortcode()?, "pinched_fingers");
 assert_eq!(hand.skin_tone()?, emojis::SkinTone::Default);
@@ -31,6 +32,11 @@ assert_eq!(hand.skin_tone()?, emojis::SkinTone::Default);
 // iterate over all the emojis.
 let smiley = emojis::iter().next()?;
 assert_eq!(smiley, "😀");
+
+// iterate and filter out newer emoji versions.
+let iter = emojis::iter().filter(|e| {
+    e.unicode_version() < emojis::UnicodeVersion::new(13, 0)
+});
 
 // iterate over all the emojis in a group.
 let grapes = emojis::Group::FoodAndDrink.emojis().next()?;

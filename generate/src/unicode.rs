@@ -8,7 +8,7 @@ use anyhow::{bail, ensure, Context, Result};
 use heck::CamelCase;
 use indexmap::IndexMap;
 
-const URL: &str = "https://unicode.org/Public/emoji/13.1/emoji-test.txt";
+const URL: &str = "https://unicode.org/Public/emoji/14.0/emoji-test.txt";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Status {
