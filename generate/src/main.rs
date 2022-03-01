@@ -34,10 +34,11 @@ fn generate_emoji_struct(
 ) -> String {
     let variations = emoji.variations().to_vec();
     let mut s = format!(
-        "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", group: Group::{}",
+        "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", unicode_version: {:?}, group: Group::{}",
         id,
         emoji.as_string(),
         emoji.name(),
+        emoji.unicode_version(),
         group,
     );
     match emoji.skin_tone() {
@@ -88,7 +89,7 @@ fn generate_emojis_array(
 fn generate(unicode_data: unicode::ParsedData, github_data: github::ParsedData) -> String {
     let mut module = String::new();
     module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
-    module.push_str("use crate::{Emoji, SkinTone};\n\n");
+    module.push_str("use crate::{Emoji, SkinTone, UnicodeVersion};\n\n");
     module.push_str(&generate_group_enum(&unicode_data));
     module.push_str(&generate_emojis_array(&unicode_data, &github_data));
     module

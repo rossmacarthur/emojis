@@ -2,8 +2,9 @@
 
 use std::iter;
 use std::str;
+use std::str::FromStr;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use heck::CamelCase;
 use indexmap::IndexMap;
 
@@ -15,6 +16,12 @@ pub enum Status {
     MinimallyQualified,
     Unqualified,
     Component,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct UnicodeVersion {
+    major: u32,
+    minor: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -31,6 +38,7 @@ pub enum SkinTone {
 pub struct Emoji {
     emoji: String,
     name: String,
+    unicode_version: UnicodeVersion,
     status: Status,
     skin_tones: Vec<SkinTone>,
     variations: Vec<String>,
@@ -97,6 +105,18 @@ fn parse_code_point(code_point: &str) -> Result<char> {
     std::char::from_u32(scalar).context("not Unicode scalar value")
 }
 
+impl FromStr for UnicodeVersion {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        ensure!(s.starts_with('E'));
+        let (major, minor) = s[1..].split_once('.').context("decimal")?;
+        let major = major.parse()?;
+        let minor = minor.parse()?;
+        Ok(Self { major, minor })
+    }
+}
+
 impl SkinTone {
     fn tones() -> impl Iterator<Item = Self> {
         IntoIterator::into_iter([
@@ -124,13 +144,21 @@ impl Emoji {
     fn from_line(line: &str) -> Result<Self> {
         let (code_points, rest) = line.split_once(';').context("expected code points")?;
         let (status, rest) = rest.split_once('#').context("expected status")?;
-        let name = rest.trim().splitn(3, ' ').nth(2).context("expected name")?;
+        let mut rest = rest.trim().splitn(3, ' ');
+        let actual = rest.next().context("expected emoji")?;
+        let unicode_version = rest.next().context("expected unicode version")?;
+        let name = rest.next().context("expected name")?;
 
         let emoji: String = code_points
             .trim()
             .split(' ')
             .map(parse_code_point)
             .collect::<Result<_>>()?;
+        if emoji != actual {
+            bail!("emoji mismatch");
+        }
+        let unicode_version =
+            UnicodeVersion::from_str(unicode_version).context("failed to parse unicode version")?;
         let name = name.trim().to_owned();
         let status = match status.trim() {
             "fully-qualified" => Status::FullyQualified,
@@ -149,6 +177,7 @@ impl Emoji {
         Ok(Self {
             emoji,
             name,
+            unicode_version,
             status,
             skin_tones,
             variations: Vec::new(),
@@ -161,6 +190,10 @@ impl Emoji {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn unicode_version(&self) -> &UnicodeVersion {
+        &self.unicode_version
     }
 
     pub fn skin_tone(&self) -> Option<SkinTone> {
@@ -177,7 +210,7 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
     let mut parsed_data = ParsedData::default();
     let mut lines = data.lines().peekable();
     while let Some(group) = lines.next_group() {
-        let group = group.replace("&", "And").to_camel_case();
+        let group = group.replace('&', "And").to_camel_case();
         while let Some(subgroup) = lines.next_subgroup() {
             for line in &mut lines {
                 if line.is_empty() {

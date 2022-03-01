@@ -10,6 +10,7 @@
 //!
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
 //! assert_eq!(hand.name(), "pinched fingers");
+//! assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 //! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 //! assert_eq!(hand.shortcode().unwrap(), "pinched_fingers");
 //! assert_eq!(hand.skin_tone().unwrap(), emojis::SkinTone::Default);
@@ -19,6 +20,14 @@
 //! ```
 //! let smiley = emojis::iter().next().unwrap();
 //! assert_eq!(smiley, "😀");
+//! ```
+//!
+//! Iterate and filter out newer emoji versions.
+//! ```
+//! let iter = emojis::iter().filter(|e| {
+//!     e.unicode_version() < emojis::UnicodeVersion::new(13, 0)
+//! });
+//! assert_eq!(iter.count(), 1738);
 //! ```
 //!
 //! Iterate over all the emojis in a group.
@@ -58,10 +67,18 @@ pub struct Emoji {
     id: u16,
     emoji: &'static str,
     name: &'static str,
+    unicode_version: UnicodeVersion,
     group: Group,
     skin_tone: Option<(u16, SkinTone)>,
     aliases: Option<&'static [&'static str]>,
     variations: &'static [&'static str],
+}
+
+/// Represents a Unicode version.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UnicodeVersion {
+    major: u32,
+    minor: u32,
 }
 
 /// Represents the skin tone of an emoji.
@@ -73,6 +90,21 @@ pub enum SkinTone {
     Medium,
     MediumDark,
     Dark,
+}
+
+impl UnicodeVersion {
+    /// Construct a new version.
+    pub const fn new(major: u32, minor: u32) -> Self {
+        Self { major, minor }
+    }
+
+    pub const fn major(self) -> u32 {
+        self.major
+    }
+
+    pub const fn minor(self) -> u32 {
+        self.minor
+    }
 }
 
 impl Emoji {
@@ -100,13 +132,27 @@ impl Emoji {
         self.name
     }
 
+    /// Returns the Unicode version this emoji first appeared in.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::UnicodeVersion;
+    ///
+    /// let villain = emojis::lookup("🦹").unwrap();
+    /// assert_eq!(villain.unicode_version(), UnicodeVersion::new(11, 0));
+    /// ```
+    pub const fn unicode_version(&self) -> UnicodeVersion {
+        self.unicode_version
+    }
+
     /// Returns this emoji's group.
     ///
     /// # Examples
     ///
     /// ```
-    /// # use emojis::Group;
-    /// #
+    /// use emojis::Group;
+    ///
     /// let flag = emojis::lookup("🇿🇦").unwrap();
     /// assert_eq!(flag.group(), Group::Flags);
     /// ```
@@ -300,6 +346,16 @@ mod tests {
     fn emoji_display() {
         let buf = format!("{}", lookup("😀").unwrap());
         assert_eq!(buf.as_str(), "😀");
+    }
+
+    #[test]
+    fn version_ordering() {
+        assert!(UnicodeVersion::new(13, 0) >= UnicodeVersion::new(12, 0));
+        assert!(UnicodeVersion::new(12, 1) >= UnicodeVersion::new(12, 0));
+        assert!(UnicodeVersion::new(12, 0) >= UnicodeVersion::new(12, 0));
+        assert!(UnicodeVersion::new(12, 0) < UnicodeVersion::new(12, 1));
+        assert!(UnicodeVersion::new(11, 0) < UnicodeVersion::new(12, 1));
+        assert!(UnicodeVersion::new(11, 0) < UnicodeVersion::new(12, 1));
     }
 
     #[test]
