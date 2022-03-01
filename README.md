@@ -44,9 +44,16 @@ assert_eq!(grapes, "🍇");
 
 // iterate over the skin tones for an emoji.
 let raised_hands = emojis::lookup("🙌🏼")?;
-let iter = raised_hands.skin_tones()?;
-let skin_tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
+let skin_tones: Vec<_> = raised_hands.skin_tones()?.map(|e| e.as_str()).collect();
 assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
+```
+
+See [examples/replace.rs](./examples/replace.rs) for an example that replaces
+gemoji names in text.
+
+```sh
+$ echo "launch :rocket:" | cargo run --example replace
+launch 🚀
 ```
 
 ## License

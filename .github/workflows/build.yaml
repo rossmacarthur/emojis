@@ -6,7 +6,7 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -16,11 +16,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.toolchain }}
-        components: rustfmt, clippy
-        override: true
+    - name: Setup Rust
+      run: |
+        rustup set profile default
+        rustup toolchain install ${{ matrix.toolchain }}
+        rustup override set ${{ matrix.toolchain }}
 
     - name: Rustfmt
       run: cargo fmt -- --check
@@ -29,7 +29,9 @@ jobs:
       run: cargo clippy --workspace --all-targets
 
     - name: Test
-      run: cargo test --workspace
+      run: |
+        cargo test --workspace --all-targets
+        cargo test --workspace --doc
 
   generated:
     runs-on: ubuntu-latest
@@ -37,13 +39,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Setup Rust
+      run: |
+        rustup set profile minimal
+        rustup toolchain install stable
+        rustup override set stable
+
     - name: Check generated code is up to date
       run: |
         cargo run --package generate
         git diff --exit-code -- src/generate.rs
 
   publish:
-    needs: build
+    needs: [generated, test]
     if: startsWith(github.ref, 'refs/tags/')
 
     runs-on: ubuntu-latest
@@ -58,11 +66,11 @@ jobs:
       - name: Check tag against package versions
         run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
+      - name: Setup Rust
+        run: |
+          rustup set profile minimal
+          rustup toolchain install stable
+          rustup override set stable
 
       - name: Publish
         env:
