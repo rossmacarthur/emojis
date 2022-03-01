@@ -52,9 +52,9 @@ extern crate alloc;
 
 mod generated;
 
-use core::cmp;
 use core::convert;
 use core::fmt;
+use core::{cmp, hash};
 
 pub use crate::generated::Group;
 
@@ -62,9 +62,8 @@ pub use crate::generated::Group;
 ///
 /// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for
 /// more information.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug)]
 pub struct Emoji {
-    id: u16,
     emoji: &'static str,
     name: &'static str,
     unicode_version: UnicodeVersion,
@@ -203,8 +202,8 @@ impl Emoji {
     /// assert!(cool.skin_tones().is_none());
     /// ```
     pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
-        let (id, _) = self.skin_tone?;
-        Some(crate::generated::EMOJIS[id as usize..].iter().take(6))
+        let (i, _) = self.skin_tone?;
+        Some(crate::generated::EMOJIS[i as usize..].iter().take(6))
     }
 
     /// Returns a version of this emoji that has the given skin tone.
@@ -251,15 +250,29 @@ impl Emoji {
     }
 }
 
+impl cmp::PartialEq<Emoji> for Emoji {
+    fn eq(&self, other: &Emoji) -> bool {
+        self.emoji == other.emoji
+    }
+}
+
 impl cmp::PartialEq<str> for Emoji {
     fn eq(&self, s: &str) -> bool {
-        cmp::PartialEq::eq(self.as_str(), s)
+        self.as_str() == s
     }
 }
 
 impl cmp::PartialEq<&str> for Emoji {
     fn eq(&self, s: &&str) -> bool {
-        cmp::PartialEq::eq(self.as_str(), *s)
+        self.as_str() == *s
+    }
+}
+
+impl cmp::Eq for Emoji {}
+
+impl hash::Hash for Emoji {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.emoji.hash(state);
     }
 }
 
@@ -271,7 +284,7 @@ impl convert::AsRef<str> for Emoji {
 
 impl fmt::Display for Emoji {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self.as_str(), f)
+        self.as_str().fmt(f)
     }
 }
 

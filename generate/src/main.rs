@@ -27,15 +27,13 @@ fn generate_group_enum(unicode_data: &unicode::ParsedData) -> String {
 
 fn generate_emoji_struct(
     github_data: &github::ParsedData,
-    id: usize,
     group: &str,
     emoji: &unicode::Emoji,
-    default_skin_tone_id: usize,
+    default_skin_tone_index: usize,
 ) -> String {
     let variations = emoji.variations().to_vec();
     let mut s = format!(
-        "Emoji {{ id: {}, emoji: \"{}\", name: \"{}\", unicode_version: {:?}, group: Group::{}",
-        id,
+        "Emoji {{ emoji: \"{}\", name: \"{}\", unicode_version: {:?}, group: Group::{}",
         emoji.as_string(),
         emoji.name(),
         emoji.unicode_version(),
@@ -44,7 +42,7 @@ fn generate_emoji_struct(
     match emoji.skin_tone() {
         Some(tone) => s.push_str(&format!(
             ", skin_tone: Some(({}, SkinTone::{:?}))",
-            default_skin_tone_id, tone
+            default_skin_tone_index, tone
         )),
         None => s.push_str(", skin_tone: None"),
     }
@@ -60,25 +58,24 @@ fn generate_emojis_array(
     unicode_data: &unicode::ParsedData,
     github_data: &github::ParsedData,
 ) -> String {
-    let mut id = 0;
-    let mut default_skin_tone_id = 0;
+    let mut i = 0;
+    let mut default_skin_tone_index = 0;
     let mut emojis = String::from("pub const EMOJIS: &[Emoji] = &[\n");
     for (group, subgroups) in unicode_data {
         for subgroup in subgroups.values() {
             for emoji in subgroup {
                 if matches!(emoji.skin_tone(), Some(SkinTone::Default)) {
-                    default_skin_tone_id = id;
+                    default_skin_tone_index = i;
                 }
                 emojis.push_str("    ");
                 emojis.push_str(&generate_emoji_struct(
                     github_data,
-                    id,
                     group,
                     emoji,
-                    default_skin_tone_id,
+                    default_skin_tone_index,
                 ));
                 emojis.push_str(",\n");
-                id += 1;
+                i += 1;
             }
         }
     }
