@@ -1,13 +1,13 @@
 [package]
 name = "emojis"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
 description = "✨ Lookup and iterate over emoji names, shortcodes, and groups."
 readme = "README.md"
 repository = "https://github.com/rossmacarthur/emojis"
 license = "MIT OR Apache-2.0"
-keywords = ["emoji", "search", "unicode"]
+keywords = ["emoji", "unicode", "github", "gemoji"]
 categories = ["text-processing", "no-std"]
 
 [workspace]
