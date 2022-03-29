@@ -340,27 +340,6 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
         .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
 }
 
-/// Find an emoji by Unicode value or shortcode.
-///
-/// # Examples
-///
-/// ```
-/// let rocket = emojis::search("🚀").unwrap();
-/// assert_eq!(rocket.shortcode().unwrap(), "rocket");
-///
-/// let rocket = emojis::search("rocket").unwrap();
-/// assert_eq!(rocket, "🚀");
-/// ```
-pub fn search(query: &str) -> Option<&'static Emoji> {
-    crate::generated::EMOJIS.iter().find(|&e| {
-        e == query
-            || e.variations.contains(&query)
-            || e.aliases
-                .map(|aliases| aliases.contains(&query))
-                .unwrap_or(false)
-    })
-}
-
 /// Find an emoji by Unicode value.
 ///
 /// # Examples
