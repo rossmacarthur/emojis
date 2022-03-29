@@ -29,17 +29,17 @@ fn replace(mut s: &str, mut o: impl Write) -> io::Result<()> {
     //
     // i..j gives ":rocket:"
     // m..n gives "rocket"
-    while let Some((i, j, m, n)) = s
+    while let Some((i, m, n, j)) = s
         .find(':')
         .map(|i| (i, i + 1))
-        .and_then(|(i, m)| s[m..].find(':').map(|x| (i, m + x + 1, m, m + x)))
+        .and_then(|(i, m)| s[m..].find(':').map(|x| (i, m, m + x, m + x + 1)))
     {
         match emojis::get_by_shortcode(&s[m..n]) {
             Some(emoji) => {
                 // Output everything preceding, except the first colon.
                 o.write_all(s[..i].as_bytes())?;
                 // Output the emoji.
-                o.write_all(emoji.as_str().as_bytes())?;
+                o.write_all(emoji.as_bytes())?;
                 // Update the string to past the last colon.
                 s = &s[j..];
             }

@@ -119,6 +119,18 @@ impl Emoji {
         self.emoji
     }
 
+    /// Returns this emoji as slice of UTF-8 encoded bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let rocket = emojis::get("🚀").unwrap();
+    /// assert_eq!(rocket.as_bytes(), &[0xf0, 0x9f, 0x9a, 0x80]);
+    /// ```
+    pub const fn as_bytes(&self) -> &[u8] {
+        self.emoji.as_bytes()
+    }
+
     /// Returns the CLDR short name for this emoji.
     ///
     /// # Examples
@@ -279,6 +291,12 @@ impl hash::Hash for Emoji {
 impl convert::AsRef<str> for Emoji {
     fn as_ref(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl convert::AsRef<[u8]> for Emoji {
+    fn as_ref(&self) -> &[u8] {
+        self.as_str().as_bytes()
     }
 }
 
