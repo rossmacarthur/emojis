@@ -18,9 +18,9 @@
 ## Examples
 
 ```rust
-let hand = emojis::lookup("🤌")?;
+let hand = emojis::get("🤌")?;
 // Or
-let hand = emojis::lookup("pinched_fingers")?;
+let hand = emojis::get_by_shortcode("pinched_fingers")?;
 
 assert_eq!(hand.as_str(), "\u{1f90c}");
 assert_eq!(hand.name(), "pinched fingers");
@@ -43,7 +43,7 @@ let grapes = emojis::Group::FoodAndDrink.emojis().next()?;
 assert_eq!(grapes, "🍇");
 
 // iterate over the skin tones for an emoji.
-let raised_hands = emojis::lookup("🙌🏼")?;
+let raised_hands = emojis::get("🙌🏼")?;
 let skin_tones: Vec<_> = raised_hands.skin_tones()?.map(|e| e.as_str()).collect();
 assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 ```

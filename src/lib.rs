@@ -4,9 +4,9 @@
 //!
 //! Lookup any emoji by Unicode value or GitHub shortcode.
 //! ```
-//! let hand = emojis::lookup("🤌").unwrap();
+//! let hand = emojis::get("🤌").unwrap();
 //! // Or
-//! let hand = emojis::lookup("pinched_fingers").unwrap();
+//! let hand = emojis::get_by_shortcode("pinched_fingers").unwrap();
 //!
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
 //! assert_eq!(hand.name(), "pinched fingers");
@@ -39,7 +39,7 @@
 //! Iterate over the skin tones for an emoji.
 //!
 //! ```
-//! let raised_hands = emojis::lookup("🙌🏼").unwrap();
+//! let raised_hands = emojis::get("🙌🏼").unwrap();
 //! let iter = raised_hands.skin_tones().unwrap();
 //! let skin_tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
 //! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
@@ -112,7 +112,7 @@ impl Emoji {
     /// # Examples
     ///
     /// ```
-    /// let rocket = emojis::lookup("🚀").unwrap();
+    /// let rocket = emojis::get("🚀").unwrap();
     /// assert_eq!(rocket.as_str(), "🚀")
     /// ```
     pub const fn as_str(&self) -> &str {
@@ -124,7 +124,7 @@ impl Emoji {
     /// # Examples
     ///
     /// ```
-    /// let cool = emojis::lookup("😎").unwrap();
+    /// let cool = emojis::get("😎").unwrap();
     /// assert_eq!(cool.name(), "smiling face with sunglasses");
     /// ```
     pub const fn name(&self) -> &str {
@@ -138,7 +138,7 @@ impl Emoji {
     /// ```
     /// use emojis::UnicodeVersion;
     ///
-    /// let villain = emojis::lookup("🦹").unwrap();
+    /// let villain = emojis::get("🦹").unwrap();
     /// assert_eq!(villain.unicode_version(), UnicodeVersion::new(11, 0));
     /// ```
     pub const fn unicode_version(&self) -> UnicodeVersion {
@@ -152,7 +152,7 @@ impl Emoji {
     /// ```
     /// use emojis::Group;
     ///
-    /// let flag = emojis::lookup("🇿🇦").unwrap();
+    /// let flag = emojis::get("🇿🇦").unwrap();
     /// assert_eq!(flag.group(), Group::Flags);
     /// ```
     pub const fn group(&self) -> Group {
@@ -166,17 +166,17 @@ impl Emoji {
     /// ```
     /// use emojis::SkinTone;
     ///
-    /// let peace = emojis::lookup("✌️").unwrap();
+    /// let peace = emojis::get("✌️").unwrap();
     /// assert_eq!(peace.skin_tone(), Some(SkinTone::Default));
     ///
-    /// let peace = emojis::lookup("✌🏽").unwrap();
+    /// let peace = emojis::get("✌🏽").unwrap();
     /// assert_eq!(peace.skin_tone(), Some(SkinTone::Medium));
     /// ```
     ///
     /// For emojis where skin tones are not applicable this will be `None`.
     ///
     /// ```
-    /// let cool = emojis::lookup("😎").unwrap();
+    /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.skin_tone().is_none());
     /// ```
     pub fn skin_tone(&self) -> Option<SkinTone> {
@@ -190,7 +190,7 @@ impl Emoji {
     /// ```
     /// use emojis::Emoji;
     ///
-    /// let luck = emojis::lookup("🤞🏼").unwrap();
+    /// let luck = emojis::get("🤞🏼").unwrap();
     /// let tones: Vec<_> = luck.skin_tones().unwrap().map(Emoji::as_str).collect();
     /// assert_eq!(tones, ["🤞", "🤞🏻", "🤞🏼", "🤞🏽", "🤞🏾", "🤞🏿"]);
     /// ```
@@ -198,7 +198,7 @@ impl Emoji {
     /// For emojis where skin tones are not applicable this will return `None`.
     ///
     /// ```
-    /// let cool = emojis::lookup("😎").unwrap();
+    /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.skin_tones().is_none());
     /// ```
     pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
@@ -213,11 +213,11 @@ impl Emoji {
     /// ```
     /// use emojis::SkinTone;
     ///
-    /// let peace = emojis::lookup("🙌🏼")
+    /// let peace = emojis::get("🙌🏼")
     ///     .unwrap()
     ///     .with_skin_tone(SkinTone::MediumDark)
     ///     .unwrap();
-    /// assert_eq!(peace, emojis::lookup("🙌🏾").unwrap());
+    /// assert_eq!(peace, emojis::get("🙌🏾").unwrap());
     /// ```
     ///
     /// For emojis where skin tones are not applicable this will be `None`.
@@ -225,7 +225,7 @@ impl Emoji {
     /// ```
     /// use emojis::SkinTone;
     ///
-    /// let cool = emojis::lookup("😎").unwrap();
+    /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.with_skin_tone(SkinTone::Medium).is_none());
     /// ```
     pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&'static Self> {
@@ -240,7 +240,7 @@ impl Emoji {
     /// # Examples
     ///
     /// ```
-    /// let thinking = emojis::lookup("🤔").unwrap();
+    /// let thinking = emojis::get("🤔").unwrap();
     /// assert_eq!(thinking.shortcode().unwrap(), "thinking");
     /// ```
     ///
@@ -288,44 +288,6 @@ impl fmt::Display for Emoji {
     }
 }
 
-/// Returns an iterator over all emojis.
-///
-/// - Ordered by Unicode CLDR data.
-/// - Excludes skin tones.
-///
-/// # Examples
-///
-/// ```
-/// let mut iter = emojis::iter();
-/// assert_eq!(iter.next().unwrap(), "😀");
-/// ```
-pub fn iter() -> impl Iterator<Item = &'static Emoji> {
-    crate::generated::EMOJIS
-        .iter()
-        .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
-}
-
-/// Lookup an emoji by Unicode value or shortcode.
-///
-/// # Examples
-///
-/// ```
-/// let rocket = emojis::lookup("🚀").unwrap();
-/// assert_eq!(rocket.shortcode().unwrap(), "rocket");
-///
-/// let rocket = emojis::lookup("rocket").unwrap();
-/// assert_eq!(rocket, "🚀");
-/// ```
-pub fn lookup(query: &str) -> Option<&'static Emoji> {
-    crate::generated::EMOJIS.iter().find(|&e| {
-        e == query
-            || e.variations.contains(&query)
-            || e.aliases
-                .map(|aliases| aliases.contains(&query))
-                .unwrap_or(false)
-    })
-}
-
 impl Group {
     /// Returns an iterator over all emojis in this group.
     ///
@@ -343,6 +305,74 @@ impl Group {
     }
 }
 
+/// Returns an iterator over all emojis.
+///
+/// - Ordered by Unicode CLDR data.
+/// - Excludes skin tones.
+///
+/// # Examples
+///
+/// ```
+/// let mut iter = emojis::iter();
+/// assert_eq!(iter.next().unwrap(), "😀");
+/// ```
+pub fn iter() -> impl Iterator<Item = &'static Emoji> {
+    crate::generated::EMOJIS
+        .iter()
+        .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
+}
+
+/// Find an emoji by Unicode value or shortcode.
+///
+/// # Examples
+///
+/// ```
+/// let rocket = emojis::search("🚀").unwrap();
+/// assert_eq!(rocket.shortcode().unwrap(), "rocket");
+///
+/// let rocket = emojis::search("rocket").unwrap();
+/// assert_eq!(rocket, "🚀");
+/// ```
+pub fn search(query: &str) -> Option<&'static Emoji> {
+    crate::generated::EMOJIS.iter().find(|&e| {
+        e == query
+            || e.variations.contains(&query)
+            || e.aliases
+                .map(|aliases| aliases.contains(&query))
+                .unwrap_or(false)
+    })
+}
+
+/// Find an emoji by Unicode value.
+///
+/// # Examples
+///
+/// ```
+/// let rocket = emojis::get("🚀").unwrap();
+/// assert_eq!(rocket.shortcode().unwrap(), "rocket");
+/// ```
+pub fn get(s: &str) -> Option<&'static Emoji> {
+    crate::generated::EMOJIS
+        .iter()
+        .find(|&e| e == s || e.variations.contains(&s))
+}
+
+/// Find an emoji by GitHub shortcode.
+///
+/// # Examples
+///
+/// ```
+/// let rocket = emojis::get_by_shortcode("rocket").unwrap();
+/// assert_eq!(rocket, "🚀");
+/// ```
+pub fn get_by_shortcode(s: &str) -> Option<&'static Emoji> {
+    crate::generated::EMOJIS.iter().find(|&e| {
+        e.aliases
+            .map(|aliases| aliases.contains(&s))
+            .unwrap_or(false)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -352,12 +382,12 @@ mod tests {
 
     #[test]
     fn emoji_partial_eq_str() {
-        assert_eq!(lookup("😀").unwrap(), "😀");
+        assert_eq!(get("😀").unwrap(), "😀");
     }
 
     #[test]
     fn emoji_display() {
-        let buf = format!("{}", lookup("😀").unwrap());
+        let buf = format!("{}", get("😀").unwrap());
         assert_eq!(buf.as_str(), "😀");
     }
 
@@ -373,7 +403,7 @@ mod tests {
 
     #[test]
     fn lookup_variation() {
-        assert_eq!(lookup("☹"), lookup("☹️"));
+        assert_eq!(get("☹"), get("☹️"));
     }
 
     #[test]
