@@ -17,7 +17,7 @@ fn main() -> io::Result<()> {
         io::stdin().read_to_string(&mut buf)?;
         buf
     };
-    replace(&*stdin, BufWriter::new(io::stdout()))
+    replace(&stdin, BufWriter::new(io::stdout()))
 }
 
 fn replace(mut s: &str, mut o: impl Write) -> io::Result<()> {

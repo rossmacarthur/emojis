@@ -170,7 +170,7 @@ impl Emoji {
         let skin_tones: Vec<_> = emoji
             .chars()
             .filter_map(|c| {
-                SkinTone::tones().find_map(|tone| (tone.code_point() == c).then(|| tone))
+                SkinTone::tones().find_map(|tone| (tone.code_point() == c).then_some(tone))
             })
             .collect();
 
