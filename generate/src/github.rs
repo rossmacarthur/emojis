@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use serde::Deserialize;
 
-const URL: &str = "https://github.com/github/gemoji/raw/v4.0.0.rc2/db/emoji.json";
+const URL: &str = "https://github.com/github/gemoji/raw/v4.0.0.rc3/db/emoji.json";
 
 #[derive(Debug, Deserialize)]
 pub struct Emoji {
