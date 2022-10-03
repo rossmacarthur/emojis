@@ -13,13 +13,13 @@
 - Iterate over emojis in recommended order.
 - Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
 - Iterate over the skin tones for an emoji.
-- Uses Unicode emoji spec (v14.0).
+- Uses Unicode v15.0 emoji specification.
 
 ## Examples
 
 ```rust
 let hand = emojis::get("🤌")?;
-// Or
+// or
 let hand = emojis::get_by_shortcode("pinched_fingers")?;
 
 assert_eq!(hand.as_str(), "\u{1f90c}");

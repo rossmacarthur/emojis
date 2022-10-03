@@ -8,7 +8,7 @@ use anyhow::{bail, ensure, Context, Result};
 use heck::CamelCase;
 use indexmap::IndexMap;
 
-const URL: &str = "https://unicode.org/Public/emoji/14.0/emoji-test.txt";
+const URL: &str = "https://unicode.org/Public/emoji/15.0/emoji-test.txt";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Status {
@@ -252,9 +252,8 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
                             }
 
                             [_] => {
-                                // this emoji has a a single skin tone we need
-                                // to find the default skin tone variation and
-                                // set it
+                                // this emoji has a single skin tone we need to
+                                // find the default skin tone to set it
                                 parsed_data[&group][&subgroup]
                                     .iter_mut()
                                     .rev()

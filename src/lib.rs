@@ -5,7 +5,7 @@
 //! Lookup any emoji by Unicode value or GitHub shortcode.
 //! ```
 //! let hand = emojis::get("🤌").unwrap();
-//! // Or
+//! // or
 //! let hand = emojis::get_by_shortcode("pinched_fingers").unwrap();
 //!
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
