@@ -1,104 +1,150 @@
 mod github;
 mod unicode;
 
+use std::collections::HashMap;
 use std::fs;
+use std::io;
+use std::io::Write as _;
 use std::path::PathBuf;
 
 use anyhow::Result;
 
 use crate::unicode::SkinTone;
 
-fn generate_group_enum(unicode_data: &unicode::ParsedData) -> String {
-    let mut group = String::new();
-    group.push_str("/// A category for an emoji.\n");
-    group.push_str("///\n");
-    group.push_str("/// Based on Unicode CLDR data.\n");
-    group.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
-    group.push_str("pub enum Group {\n");
+fn write_group_enum<W: io::Write>(w: &mut W, unicode_data: &unicode::ParsedData) -> Result<()> {
+    writeln!(w, "/// A category for an emoji.")?;
+    writeln!(w, "///")?;
+    writeln!(w, "/// Based on Unicode CLDR data.")?;
+    writeln!(
+        w,
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]"
+    )?;
+    writeln!(w, "pub enum Group {{")?;
     for name in unicode_data.keys() {
         if name == "Component" {
             continue;
         }
-        group.push_str(&format!("   {},\n", name));
+        writeln!(w, "   {},", name)?;
     }
-    group.push_str("}\n\n");
-    group
+    writeln!(w, "}}")?;
+    Ok(())
 }
 
-fn generate_emoji_struct(
+fn write_emoji_struct<W: io::Write>(
+    w: &mut W,
     github_data: &github::ParsedData,
     group: &str,
     emoji: &unicode::Emoji,
     default_skin_tone_index: usize,
-) -> String {
-    let variations = emoji.variations().to_vec();
-    let mut s = format!(
+) -> Result<()> {
+    write!(
+        w,
         "Emoji {{ emoji: \"{}\", name: \"{}\", unicode_version: {:?}, group: Group::{}",
-        emoji.as_string(),
+        emoji.as_str(),
         emoji.name(),
         emoji.unicode_version(),
         group,
-    );
+    )?;
     match emoji.skin_tone() {
-        Some(tone) => s.push_str(&format!(
+        Some(tone) => write!(
+            w,
             ", skin_tone: Some(({}, SkinTone::{:?}))",
             default_skin_tone_index, tone
-        )),
-        None => s.push_str(", skin_tone: None"),
+        )?,
+        None => write!(w, ", skin_tone: None")?,
     }
-    match &github_data.get(emoji.as_string()) {
-        Some(github) => s.push_str(&format!(", aliases: Some(&{:?})", github.aliases())),
-        None => s.push_str(", aliases: None"),
+    match &github_data.get(emoji.as_str()) {
+        Some(github) => write!(w, ", aliases: Some(&{:?}) }}", github.aliases())?,
+        None => write!(w, ", aliases: None }}")?,
     }
-    s.push_str(&format!(", variations: &{:?} }}", variations));
-    s
+    Ok(())
 }
 
-fn generate_emojis_array(
+fn write_emojis_slice<W: io::Write>(
+    w: &mut W,
     unicode_data: &unicode::ParsedData,
     github_data: &github::ParsedData,
-) -> String {
+    unicode_map: &mut HashMap<String, String>,
+    shortcode_map: &mut HashMap<String, String>,
+) -> Result<()> {
     let mut i = 0;
     let mut default_skin_tone_index = 0;
-    let mut emojis = String::from("pub const EMOJIS: &[Emoji] = &[\n");
+
+    writeln!(w, "pub const EMOJIS: &[Emoji] = &[")?;
     for (group, subgroups) in unicode_data {
         for subgroup in subgroups.values() {
             for emoji in subgroup {
                 if matches!(emoji.skin_tone(), Some(SkinTone::Default)) {
                     default_skin_tone_index = i;
                 }
-                emojis.push_str("    ");
-                emojis.push_str(&generate_emoji_struct(
-                    github_data,
-                    group,
-                    emoji,
-                    default_skin_tone_index,
-                ));
-                emojis.push_str(",\n");
+                write!(w, "    ")?;
+                write_emoji_struct(w, github_data, group, emoji, default_skin_tone_index)?;
+                writeln!(w, ",")?;
+
+                unicode_map.insert(emoji.as_str().to_owned(), i.to_string());
+                for v in emoji.variations() {
+                    assert!(unicode_map.insert(v.to_owned(), i.to_string()).is_none());
+                }
+
+                if let Some(github) = &github_data.get(emoji.as_str()) {
+                    for alias in github.aliases() {
+                        assert!(shortcode_map
+                            .insert(alias.to_owned(), i.to_string())
+                            .is_none());
+                    }
+                }
                 i += 1;
             }
         }
     }
-    emojis.push_str("];\n");
-    emojis
+    writeln!(w, "];")?;
+    Ok(())
 }
 
-fn generate(unicode_data: unicode::ParsedData, github_data: github::ParsedData) -> String {
-    let mut module = String::new();
-    module.push_str("#![cfg_attr(rustfmt, rustfmt::skip)]\n\n");
-    module.push_str("use crate::{Emoji, SkinTone, UnicodeVersion};\n\n");
-    module.push_str(&generate_group_enum(&unicode_data));
-    module.push_str(&generate_emojis_array(&unicode_data, &github_data));
-    module
+fn write_phf_map<W: io::Write>(w: &mut W, map: HashMap<String, String>) -> Result<()> {
+    write!(w, "pub static MAP: phf::Map<&'static str, usize> = ")?;
+    let mut gen = phf_codegen::Map::new();
+    for (key, value) in &map {
+        gen.entry(key, value);
+    }
+    writeln!(w, "{};", gen.build())?;
+    Ok(())
 }
 
 fn main() -> Result<()> {
-    let unicode_data = unicode::fetch_and_parse_emoji_data()?;
-    let github_data = github::fetch_and_parse_emoji_data()?;
-    let module = generate(unicode_data, github_data);
-    let path: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "src", "generated.rs"]
+    let dir: PathBuf = [env!("CARGO_MANIFEST_DIR"), "..", "src", "gen"]
         .iter()
         .collect();
-    fs::write(&path, module)?;
+
+    let unicode_data = unicode::fetch_and_parse_emoji_data()?;
+    let github_data = github::fetch_and_parse_emoji_data()?;
+    let mut unicode_map = HashMap::new();
+    let mut shortcode_map = HashMap::new();
+
+    fs::remove_dir_all(&dir).ok();
+    fs::create_dir_all(&dir)?;
+
+    let mut f = fs::File::create(dir.join("mod.rs"))?;
+    writeln!(f, "#![cfg_attr(rustfmt, rustfmt::skip)]\n")?;
+    writeln!(f, "pub mod shortcode;")?;
+    writeln!(f, "pub mod unicode;\n")?;
+    writeln!(f, "use crate::{{Emoji, SkinTone, UnicodeVersion}};\n")?;
+
+    write_group_enum(&mut f, &unicode_data)?;
+    writeln!(f)?;
+    write_emojis_slice(
+        &mut f,
+        &unicode_data,
+        &github_data,
+        &mut unicode_map,
+        &mut shortcode_map,
+    )?;
+
+    let mut f = fs::File::create(dir.join("unicode.rs"))?;
+    write_phf_map(&mut f, unicode_map)?;
+
+    let mut f = fs::File::create(dir.join("shortcode.rs"))?;
+    write_phf_map(&mut f, shortcode_map)?;
+
     Ok(())
 }

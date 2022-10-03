@@ -184,7 +184,7 @@ impl Emoji {
         })
     }
 
-    pub fn as_string(&self) -> &String {
+    pub fn as_str(&self) -> &str {
         &self.emoji
     }
 

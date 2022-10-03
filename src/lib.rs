@@ -50,13 +50,14 @@
 #[cfg(test)]
 extern crate alloc;
 
-mod generated;
+mod gen;
 
+use core::cmp;
 use core::convert;
 use core::fmt;
-use core::{cmp, hash};
+use core::hash;
 
-pub use crate::generated::Group;
+pub use crate::gen::Group;
 
 /// Represents an emoji.
 ///
@@ -70,7 +71,6 @@ pub struct Emoji {
     group: Group,
     skin_tone: Option<(u16, SkinTone)>,
     aliases: Option<&'static [&'static str]>,
-    variations: &'static [&'static str],
 }
 
 /// Represents a Unicode version.
@@ -215,7 +215,7 @@ impl Emoji {
     /// ```
     pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
         let (i, _) = self.skin_tone?;
-        Some(crate::generated::EMOJIS[i as usize..].iter().take(6))
+        Some(crate::gen::EMOJIS[i as usize..].iter().take(6))
     }
 
     /// Returns a version of this emoji that has the given skin tone.
@@ -335,7 +335,7 @@ impl Group {
 /// assert_eq!(iter.next().unwrap(), "😀");
 /// ```
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
-    crate::generated::EMOJIS
+    crate::gen::EMOJIS
         .iter()
         .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
 }
@@ -349,9 +349,9 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 /// assert_eq!(rocket.shortcode().unwrap(), "rocket");
 /// ```
 pub fn get(s: &str) -> Option<&'static Emoji> {
-    crate::generated::EMOJIS
-        .iter()
-        .find(|&e| e == s || e.variations.contains(&s))
+    crate::gen::unicode::MAP
+        .get(s)
+        .map(|&i| &crate::gen::EMOJIS[i])
 }
 
 /// Find an emoji by GitHub shortcode.
@@ -363,11 +363,9 @@ pub fn get(s: &str) -> Option<&'static Emoji> {
 /// assert_eq!(rocket, "🚀");
 /// ```
 pub fn get_by_shortcode(s: &str) -> Option<&'static Emoji> {
-    crate::generated::EMOJIS.iter().find(|&e| {
-        e.aliases
-            .map(|aliases| aliases.contains(&s))
-            .unwrap_or(false)
-    })
+    crate::gen::shortcode::MAP
+        .get(s)
+        .map(|&i| &crate::gen::EMOJIS[i])
 }
 
 #[cfg(test)]
