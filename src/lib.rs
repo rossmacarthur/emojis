@@ -330,6 +330,31 @@ impl fmt::Display for Emoji {
 }
 
 impl Group {
+    /// Returns an iterator over all groups.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut iter = emojis::Group::iter();
+    /// assert_eq!(iter.next().unwrap(), emojis::Group::SmileysAndEmotion);
+    /// assert_eq!(iter.next().unwrap(), emojis::Group::PeopleAndBody);
+    /// ```
+    pub fn iter() -> impl Iterator<Item = Group> {
+        [
+            Self::SmileysAndEmotion,
+            Self::PeopleAndBody,
+            Self::AnimalsAndNature,
+            Self::FoodAndDrink,
+            Self::TravelAndPlaces,
+            Self::Activities,
+            Self::Objects,
+            Self::Symbols,
+            Self::Flags,
+        ]
+        .iter()
+        .copied()
+    }
+
     /// Returns an iterator over all emojis in this group.
     ///
     /// # Examples
