@@ -260,6 +260,22 @@ impl Emoji {
     pub fn shortcode(&self) -> Option<&str> {
         self.aliases.and_then(|aliases| aliases.first().copied())
     }
+
+    /// Returns an iterator over this emoji's GitHub shortcode and aliases.
+    ///
+    /// See [gemoji] for more information.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let thinking = emojis::get("🤔").unwrap();
+    /// assert_eq!(thinking.aliases().next().unwrap(), "thinking");
+    /// ```
+    ///
+    /// [gemoji]: https://github.com/github/gemoji
+    pub fn aliases(&self) -> impl Iterator<Item = &str> + '_ {
+        self.aliases.into_iter().flatten().copied()
+    }
 }
 
 impl cmp::PartialEq<Emoji> for Emoji {
@@ -437,6 +453,13 @@ mod tests {
                     assert!(emoji.skin_tones().is_none());
                 }
             }
+        }
+    }
+
+    #[test]
+    fn aliases() {
+        for emoji in iter() {
+            assert_eq!(emoji.shortcode(), emoji.aliases().next());
         }
     }
 }
