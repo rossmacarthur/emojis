@@ -247,6 +247,10 @@ impl Emoji {
 
     /// Returns this emoji's first GitHub shortcode.
     ///
+    /// Most emojis only have one shortcode but for a few there are multiple.
+    /// Use the [`shortcodes()`][Emoji::shortcodes] method to return all the
+    /// shortcodes.
+    ///
     /// See [gemoji] for more information.
     ///
     /// # Examples
@@ -270,13 +274,13 @@ impl Emoji {
     /// ```
     /// let laughing = emojis::get("😆").unwrap();
     /// assert_eq!(
-    ///     laughing.shortcodes().collect::<Vec<&str>>(),
+    ///     laughing.shortcodes().collect::<Vec<_>>(),
     ///     vec!["laughing", "satisfied"]
     /// );
     /// ```
     ///
     /// [gemoji]: https://github.com/github/gemoji
-    pub fn shortcodes(&self) -> impl Iterator<Item = &'static str> {
+    pub fn shortcodes(&self) -> impl Iterator<Item = &str> {
         self.aliases.into_iter().flatten().copied()
     }
 }
@@ -315,7 +319,7 @@ impl convert::AsRef<str> for Emoji {
 
 impl convert::AsRef<[u8]> for Emoji {
     fn as_ref(&self) -> &[u8] {
-        self.as_str().as_bytes()
+        self.as_bytes()
     }
 }
 
@@ -359,7 +363,9 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
         .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
 }
 
-/// Find an emoji by Unicode value.
+/// Lookup an emoji by Unicode value.
+///
+/// This take O(1) time.
 ///
 /// # Examples
 ///
@@ -373,7 +379,9 @@ pub fn get(s: &str) -> Option<&'static Emoji> {
         .map(|&i| &crate::gen::EMOJIS[i])
 }
 
-/// Find an emoji by GitHub shortcode.
+/// Lookup an emoji by GitHub shortcode.
+///
+/// This take O(1) time.
 ///
 /// # Examples
 ///
@@ -462,7 +470,9 @@ mod tests {
     #[test]
     fn shortcodes() {
         for emoji in iter() {
-            assert_eq!(emoji.shortcode(), emoji.shortcodes().next());
+            let exp = emoji.aliases.map(Vec::from).unwrap_or_else(Vec::new);
+            assert_eq!(emoji.shortcodes().collect::<Vec<_>>(), exp);
+            assert_eq!(emoji.shortcodes().next(), emoji.shortcode());
         }
     }
 }
