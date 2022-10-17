@@ -245,7 +245,7 @@ impl Emoji {
             .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
     }
 
-    /// Returns this emoji's GitHub shortcode.
+    /// Returns this emoji's first GitHub shortcode.
     ///
     /// See [gemoji] for more information.
     ///
@@ -261,19 +261,22 @@ impl Emoji {
         self.aliases.and_then(|aliases| aliases.first().copied())
     }
 
-    /// Returns an iterator over this emoji's GitHub shortcode and aliases.
+    /// Returns an iterator over this emoji's GitHub shortcodes.
     ///
     /// See [gemoji] for more information.
     ///
     /// # Examples
     ///
     /// ```
-    /// let thinking = emojis::get("🤔").unwrap();
-    /// assert_eq!(thinking.aliases().next().unwrap(), "thinking");
+    /// let laughing = emojis::get("😆").unwrap();
+    /// assert_eq!(
+    ///     laughing.shortcodes().collect::<Vec<&str>>(),
+    ///     vec!["laughing", "satisfied"]
+    /// );
     /// ```
     ///
     /// [gemoji]: https://github.com/github/gemoji
-    pub fn aliases(&self) -> impl Iterator<Item = &str> {
+    pub fn shortcodes(&self) -> impl Iterator<Item = &'static str> {
         self.aliases.into_iter().flatten().copied()
     }
 }
@@ -457,9 +460,9 @@ mod tests {
     }
 
     #[test]
-    fn aliases() {
+    fn shortcodes() {
         for emoji in iter() {
-            assert_eq!(emoji.shortcode(), emoji.aliases().next());
+            assert_eq!(emoji.shortcode(), emoji.shortcodes().next());
         }
     }
 }
