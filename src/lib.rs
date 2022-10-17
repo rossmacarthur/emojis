@@ -273,7 +273,7 @@ impl Emoji {
     /// ```
     ///
     /// [gemoji]: https://github.com/github/gemoji
-    pub fn aliases(&self) -> impl Iterator<Item = &str> + '_ {
+    pub fn aliases(&self) -> impl Iterator<Item = &str> {
         self.aliases.into_iter().flatten().copied()
     }
 }
