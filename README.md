@@ -6,55 +6,84 @@
 
 ✨ Lookup and iterate over emoji names, shortcodes, and groups.
 
-### Features
+## Features
 
-- Lookup up emoji by Unicode value.
-- Lookup up emoji by GitHub shortcode.
-- Iterate over emojis in recommended order.
-- Iterate over emojis in an emoji group. E.g. "Smileys & Emotion" or "Flags".
-- Iterate over the skin tones for an emoji.
-- Uses Unicode v15.0 emoji specification.
+- Lookup up emoji by Unicode value
+- Lookup up emoji by [GitHub shortcode][gemoji]
+- Iterate over emojis in recommended order
+- Iterate over emojis in an emoji group, e.g. "Smileys & Emotion" or "Flags"
+- Iterate over the skin tones for an emoji
+- Uses Unicode v15.0 emoji specification
+
+## Getting started
+
+First, add the `emojis` crate to your Cargo manifest.
+
+```sh
+cargo add emojis
+```
+
+Simply use the `get()` function to lookup emojis by Unicode value.
+```rust
+let hand = emojis::get("🚀")?;
+```
+
+Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
+
+```rust
+let hand = emojis::get_by_shortcode("rocket")?;
+```
 
 ## Examples
 
+The returned `Emoji` struct has various information about the emoji.
 ```rust
 let hand = emojis::get("🤌")?;
-// or
-let hand = emojis::get_by_shortcode("pinched_fingers")?;
-
 assert_eq!(hand.as_str(), "\u{1f90c}");
 assert_eq!(hand.name(), "pinched fingers");
 assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 assert_eq!(hand.shortcode()?, "pinched_fingers");
 assert_eq!(hand.skin_tone()?, emojis::SkinTone::Default);
+```
 
-// iterate over all the emojis.
-let smiley = emojis::iter().next()?;
-assert_eq!(smiley, "😀");
-
-// iterate and filter out newer emoji versions.
-let iter = emojis::iter().filter(|e| {
-    e.unicode_version() < emojis::UnicodeVersion::new(13, 0)
-});
-
-// iterate over all the emojis in a group.
-let grapes = emojis::Group::FoodAndDrink.emojis().next()?;
-assert_eq!(grapes, "🍇");
-
-// iterate over the skin tones for an emoji.
+Another common operation is iterating over the skin tones of an emoji.
+```rust
 let raised_hands = emojis::get("🙌🏼")?;
 let skin_tones: Vec<_> = raised_hands.skin_tones()?.map(|e| e.as_str()).collect();
 assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 ```
 
-See [examples/replace.rs](./examples/replace.rs) for an example that replaces
-gemoji names in text.
+You can use the `iter()` function to iterate over all emojis (only includes the
+default skin tone versions).
+```rust
+let smiley = emojis::iter().next()?;
+assert_eq!(smiley, "😀");
+```
+
+It is recommended to filter the list by the maximum Unicode version that you
+wish to support.
+```rust
+let iter = emojis::iter().filter(|e| {
+    e.unicode_version() < emojis::UnicodeVersion::new(13, 0)
+});
+```
+
+Using the `Group` enum you can iterate over all emojis in a group.
+```rust
+let grapes = emojis::Group::FoodAndDrink.emojis().next()?;
+assert_eq!(grapes, "🍇");
+```
+
+Checkout [examples/replace.rs](./examples/replace.rs) for an example that
+replaces [gemoji] names in text.
 
 ```sh
 $ echo "launch :rocket:" | cargo run --example replace
 launch 🚀
 ```
+
+[gemoji]: https://github.com/github/gemoji
 
 ## License
 

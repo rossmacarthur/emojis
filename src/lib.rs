@@ -1,49 +1,68 @@
 //! ✨ Lookup and iterate over emoji names, shortcodes, and groups.
 //!
-//! # Examples
+//! ## Getting started
 //!
-//! Lookup any emoji by Unicode value or GitHub shortcode.
+//! First, add the `emojis` crate to your Cargo manifest.
+//!
+//! ```sh
+//! cargo add emojis
+//! ```
+//!
+//! Simply use the `get()` function to lookup emojis by Unicode value.
+//! ```
+//! let hand = emojis::get("🚀").unwrap();
+//! ```
+//!
+//! Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
+//!
+//! ```
+//! let hand = emojis::get_by_shortcode("rocket").unwrap();
+//! ```
+//!
+//! These operations take O(1) time.
+//!
+//! ## Examples
+//!
+//! The returned [`Emoji`] struct has various information about the emoji.
 //! ```
 //! let hand = emojis::get("🤌").unwrap();
-//! // or
-//! let hand = emojis::get_by_shortcode("pinched_fingers").unwrap();
-//!
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
 //! assert_eq!(hand.name(), "pinched fingers");
 //! assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 //! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
-//! assert_eq!(hand.shortcode().unwrap(), "pinched_fingers");
-//! assert_eq!(hand.skin_tone().unwrap(), emojis::SkinTone::Default);
+//! assert_eq!(hand.shortcode(), Some("pinched_fingers"));
+//! assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));
 //! ```
 //!
-//! Iterate over all the emojis.
+//! Another common operation is iterating over the skin tones of an emoji.
+//! ```
+//! let raised_hands = emojis::get("🙌🏼").unwrap();
+//! let skin_tones: Vec<_> = raised_hands.skin_tones().unwrap().map(|e| e.as_str()).collect();
+//! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
+//! ```
+//!
+//! You can use the [`iter()`] function to iterate over all emojis (only includes the
+//! default skin tone versions).
 //! ```
 //! let smiley = emojis::iter().next().unwrap();
 //! assert_eq!(smiley, "😀");
 //! ```
 //!
-//! Iterate and filter out newer emoji versions.
+//! It is recommended to filter the list by the maximum Unicode version that you
+//! wish to support.
 //! ```
 //! let iter = emojis::iter().filter(|e| {
 //!     e.unicode_version() < emojis::UnicodeVersion::new(13, 0)
 //! });
-//! assert_eq!(iter.count(), 1738);
 //! ```
 //!
-//! Iterate over all the emojis in a group.
+//! Using the [`Group`] enum you can iterate over all emojis in a group.
 //! ```
 //! let grapes = emojis::Group::FoodAndDrink.emojis().next().unwrap();
 //! assert_eq!(grapes, "🍇");
 //! ```
 //!
-//! Iterate over the skin tones for an emoji.
-//!
-//! ```
-//! let raised_hands = emojis::get("🙌🏼").unwrap();
-//! let iter = raised_hands.skin_tones().unwrap();
-//! let skin_tones: Vec<_> = iter.map(emojis::Emoji::as_str).collect();
-//! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
-//! ```
+//! [gemoji]: https://github.com/github/gemoji
 
 #![no_std]
 
@@ -73,14 +92,14 @@ pub struct Emoji {
     aliases: Option<&'static [&'static str]>,
 }
 
-/// Represents a Unicode version.
+/// A Unicode version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UnicodeVersion {
     major: u32,
     minor: u32,
 }
 
-/// Represents the skin tone of an emoji.
+/// the skin tone of an emoji.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SkinTone {
     Default,
