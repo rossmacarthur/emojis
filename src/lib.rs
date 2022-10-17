@@ -245,7 +245,7 @@ impl Emoji {
             .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
     }
 
-    /// Returns this emoji's GitHub shortcode.
+    /// Returns this emoji's first GitHub shortcode.
     ///
     /// See [gemoji] for more information.
     ///
@@ -259,6 +259,25 @@ impl Emoji {
     /// [gemoji]: https://github.com/github/gemoji
     pub fn shortcode(&self) -> Option<&str> {
         self.aliases.and_then(|aliases| aliases.first().copied())
+    }
+
+    /// Returns an iterator over this emoji's GitHub shortcodes.
+    ///
+    /// See [gemoji] for more information.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let laughing = emojis::get("😆").unwrap();
+    /// assert_eq!(
+    ///     laughing.shortcodes().collect::<Vec<&str>>(),
+    ///     vec!["laughing", "satisfied"]
+    /// );
+    /// ```
+    ///
+    /// [gemoji]: https://github.com/github/gemoji
+    pub fn shortcodes(&self) -> impl Iterator<Item = &'static str> {
+        self.aliases.into_iter().flatten().copied()
     }
 }
 
@@ -437,6 +456,13 @@ mod tests {
                     assert!(emoji.skin_tones().is_none());
                 }
             }
+        }
+    }
+
+    #[test]
+    fn shortcodes() {
+        for emoji in iter() {
+            assert_eq!(emoji.shortcode(), emoji.shortcodes().next());
         }
     }
 }
