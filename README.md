@@ -25,13 +25,13 @@ cargo add emojis
 
 Simply use the `get()` function to lookup emojis by Unicode value.
 ```rust
-let hand = emojis::get("🚀")?;
+let rocket = emojis::get("🚀")?;
 ```
 
 Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
 
 ```rust
-let hand = emojis::get_by_shortcode("rocket")?;
+let rocket = emojis::get_by_shortcode("rocket")?;
 ```
 
 ## Examples

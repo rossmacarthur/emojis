@@ -10,13 +10,13 @@
 //!
 //! Simply use the `get()` function to lookup emojis by Unicode value.
 //! ```
-//! let hand = emojis::get("🚀").unwrap();
+//! let rocket = emojis::get("🚀").unwrap();
 //! ```
 //!
 //! Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
 //!
 //! ```
-//! let hand = emojis::get_by_shortcode("rocket").unwrap();
+//! let rocket = emojis::get_by_shortcode("rocket").unwrap();
 //! ```
 //!
 //! These operations take O(1) time.
