@@ -19,7 +19,7 @@
 //! let rocket = emojis::get_by_shortcode("rocket").unwrap();
 //! ```
 //!
-//! These operations take O(1) time.
+//! These operations take *Ο(1)* time.
 //!
 //! ## Examples
 //!
@@ -99,7 +99,7 @@ pub struct UnicodeVersion {
     minor: u32,
 }
 
-/// the skin tone of an emoji.
+/// The skin tone of an emoji.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SkinTone {
     Default,
@@ -409,7 +409,7 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 
 /// Lookup an emoji by Unicode value.
 ///
-/// This take O(1) time.
+/// This take *Ο(1)* time.
 ///
 /// # Examples
 ///
@@ -425,7 +425,7 @@ pub fn get(s: &str) -> Option<&'static Emoji> {
 
 /// Lookup an emoji by GitHub shortcode.
 ///
-/// This take O(1) time.
+/// This take *Ο(1)* time.
 ///
 /// # Examples
 ///
@@ -437,93 +437,4 @@ pub fn get_by_shortcode(s: &str) -> Option<&'static Emoji> {
     crate::gen::shortcode::MAP
         .get(s)
         .map(|&i| &crate::gen::EMOJIS[i])
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use alloc::format;
-    use alloc::vec::Vec;
-
-    #[test]
-    fn emoji_partial_eq_str() {
-        assert_eq!(get("😀").unwrap(), "😀");
-    }
-
-    #[test]
-    fn emoji_display() {
-        let buf = format!("{}", get("😀").unwrap());
-        assert_eq!(buf.as_str(), "😀");
-    }
-
-    #[test]
-    fn version_ordering() {
-        assert!(UnicodeVersion::new(13, 0) >= UnicodeVersion::new(12, 0));
-        assert!(UnicodeVersion::new(12, 1) >= UnicodeVersion::new(12, 0));
-        assert!(UnicodeVersion::new(12, 0) >= UnicodeVersion::new(12, 0));
-        assert!(UnicodeVersion::new(12, 0) < UnicodeVersion::new(12, 1));
-        assert!(UnicodeVersion::new(11, 0) < UnicodeVersion::new(12, 1));
-        assert!(UnicodeVersion::new(11, 0) < UnicodeVersion::new(12, 1));
-    }
-
-    #[test]
-    fn get_variation() {
-        assert_eq!(get("☹"), get("☹️"));
-    }
-
-    #[test]
-    fn iter_only_default_skin_tones() {
-        assert!(iter().all(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None)));
-        assert_ne!(
-            iter()
-                .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default)))
-                .count(),
-            0
-        );
-    }
-
-    #[test]
-    fn skin_tones() {
-        let skin_tones = [
-            SkinTone::Default,
-            SkinTone::Light,
-            SkinTone::MediumLight,
-            SkinTone::Medium,
-            SkinTone::MediumDark,
-            SkinTone::Dark,
-        ];
-        for emoji in iter() {
-            match emoji.skin_tone() {
-                Some(_) => {
-                    let emojis: Vec<_> = emoji.skin_tones().unwrap().collect();
-                    assert_eq!(emojis.len(), 6);
-                    let default = emojis[0];
-                    for (emoji, skin_tone) in emojis.iter().zip(skin_tones) {
-                        assert_eq!(emoji.skin_tone().unwrap(), skin_tone, "{:#?}", emojis);
-                        assert_eq!(emoji.with_skin_tone(SkinTone::Default).unwrap(), default);
-                    }
-                }
-                None => {
-                    assert!(emoji.skin_tones().is_none());
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn shortcodes() {
-        for emoji in iter() {
-            let exp = emoji.aliases.map(Vec::from).unwrap_or_else(Vec::new);
-            assert_eq!(emoji.shortcodes().collect::<Vec<_>>(), exp);
-            assert_eq!(emoji.shortcodes().next(), emoji.shortcode());
-        }
-    }
-
-    #[test]
-    fn group_iter_and_emojis() {
-        let left: Vec<_> = Group::iter().flat_map(|g| g.emojis()).collect();
-        let right: Vec<_> = iter().collect();
-        assert_eq!(left, right);
-    }
 }
