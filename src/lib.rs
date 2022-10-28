@@ -468,7 +468,7 @@ mod tests {
     }
 
     #[test]
-    fn lookup_variation() {
+    fn get_variation() {
         assert_eq!(get("☹"), get("☹️"));
     }
 
@@ -518,5 +518,12 @@ mod tests {
             assert_eq!(emoji.shortcodes().collect::<Vec<_>>(), exp);
             assert_eq!(emoji.shortcodes().next(), emoji.shortcode());
         }
+    }
+
+    #[test]
+    fn group_iter_and_emojis() {
+        let left: Vec<_> = Group::iter().flat_map(|g| g.emojis()).collect();
+        let right: Vec<_> = iter().collect();
+        assert_eq!(left, right);
     }
 }
