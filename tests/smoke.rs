@@ -33,8 +33,8 @@ fn emoji_partial_eq_str() {
 
 #[test]
 fn emoji_display() {
-    let buf = std::format!("{}", emojis::get("😀").unwrap());
-    assert_eq!(buf.as_str(), "😀");
+    let s = emojis::get("😀").unwrap().to_string();
+    assert_eq!(s, "😀");
 }
 
 #[test]

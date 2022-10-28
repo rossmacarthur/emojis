@@ -24,7 +24,7 @@ fn write_group_enum<W: io::Write>(w: &mut W, unicode_data: &unicode::ParsedData)
         if name == "Component" {
             continue;
         }
-        writeln!(w, "   {},", name)?;
+        writeln!(w, "   {name},")?;
     }
     writeln!(w, "}}")?;
     Ok(())
