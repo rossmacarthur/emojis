@@ -21,6 +21,12 @@
 //!
 //! These operations take *Ο(1)* time.
 //!
+//! ## MSRV
+//!
+//! Currently the minimum supported Rust version is 1.60 due to the dependency
+//! on [`phf`]. The policy of this crate is to only increase the MSRV in a
+//! breaking release.
+//!
 //! ## Examples
 //!
 //! The returned [`Emoji`] struct has various information about the emoji.

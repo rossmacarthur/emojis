@@ -2,25 +2,24 @@ name: build
 
 on: [push, pull_request]
 
-env:
-  RUSTFLAGS: --deny warnings
-
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    env:
+      RUSTFLAGS: --deny warnings
 
     strategy:
       matrix:
         toolchain: [stable, beta, nightly]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Setup Rust
-      run: |
-        rustup set profile default
-        rustup toolchain install ${{ matrix.toolchain }}
-        rustup override set ${{ matrix.toolchain }}
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        components: clippy, rustfmt
 
     - name: Rustfmt
       run: cargo fmt -- --check
@@ -33,46 +32,49 @@ jobs:
         cargo test --workspace --all-targets
         cargo test --workspace --doc
 
+  msrv:
+    runs-on: ubuntu-latest
+
+    env:
+      RUSTFLAGS: --deny warnings
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.60
+
+      - name: Test
+        run: cargo test
+
   generated:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup Rust
-      run: |
-        rustup set profile minimal
-        rustup toolchain install stable
-        rustup override set stable
+    - uses: actions/checkout@v3
+    - uses: dtolnay/rust-toolchain@stable
 
     - name: Check generated code is up to date
       run: |
         cargo run --package generate
-        git diff --exit-code -- src/generate.rs
+        git diff --exit-code -- src/gen/
 
   publish:
-    needs: [generated, test]
+    needs: [generated, test, msrv]
     if: startsWith(github.ref, 'refs/tags/')
 
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - uses: dtolnay/rust-toolchain@stable
 
-      - name: Calculate version from tag
-        id: version
-        run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+    - name: Calculate version from tag
+      id: version
+      run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
 
-      - name: Check tag against package versions
-        run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
+    - name: Check tag against package versions
+      run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
 
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install stable
-          rustup override set stable
-
-      - name: Publish
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-        run: cargo publish
+    - name: Publish
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      run: cargo publish

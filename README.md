@@ -34,6 +34,12 @@ Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
 let rocket = emojis::get_by_shortcode("rocket")?;
 ```
 
+## MSRV
+
+Currently the minimum supported Rust version is 1.60 due to the dependency on
+[phf](https://crates.io/crates/phf). The policy of this crate is to only
+increase the MSRV in a breaking release.
+
 ## Examples
 
 The returned `Emoji` struct has various information about the emoji.
