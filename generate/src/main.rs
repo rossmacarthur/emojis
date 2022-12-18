@@ -37,23 +37,21 @@ fn write_emoji_struct<W: io::Write>(
     emoji: &unicode::Emoji,
     default_skin_tone_index: usize,
 ) -> Result<()> {
+    let e = emoji.as_str();
+    let name = emoji.name();
+    let uv = emoji.unicode_version();
     write!(
         w,
-        "Emoji {{ emoji: \"{}\", name: \"{}\", unicode_version: {:?}, group: Group::{}",
-        emoji.as_str(),
-        emoji.name(),
-        emoji.unicode_version(),
-        group,
+        "Emoji {{ emoji: \"{e}\", name: \"{name}\", unicode_version: {uv:?}, group: Group::{group}",
     )?;
     match emoji.skin_tone() {
         Some(tone) => write!(
             w,
-            ", skin_tone: Some(({}, SkinTone::{:?}))",
-            default_skin_tone_index, tone
+            ", skin_tone: Some(({default_skin_tone_index}, SkinTone::{tone:?}))",
         )?,
         None => write!(w, ", skin_tone: None")?,
     }
-    match &github_data.get(emoji.as_str()) {
+    match &github_data.get(e) {
         Some(github) => write!(w, ", aliases: Some(&{:?}) }}", github.aliases())?,
         None => write!(w, ", aliases: None }}")?,
     }
