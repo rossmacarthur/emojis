@@ -1,6 +1,15 @@
 //! ✨ Lookup and iterate over emoji names, shortcodes, and groups.
 //!
-//! ## Getting started
+//! # Features
+//!
+//! - Lookup up emoji by Unicode value
+//! - Lookup up emoji by [GitHub shortcode][gemoji]
+//! - Iterate over emojis in recommended order
+//! - Iterate over emojis in an emoji group, e.g. "Smileys & Emotion" or "Flags"
+//! - Iterate over the skin tones for an emoji
+//! - Uses Unicode v15.0 emoji specification
+//!
+//! # Getting started
 //!
 //! First, add the `emojis` crate to your Cargo manifest.
 //!
@@ -21,13 +30,13 @@
 //!
 //! These operations take *Ο(1)* time.
 //!
-//! ## MSRV
+//! # MSRV
 //!
 //! Currently the minimum supported Rust version is 1.60 due to the dependency
 //! on [`phf`]. The policy of this crate is to only increase the MSRV in a
 //! breaking release.
 //!
-//! ## Examples
+//! # Examples
 //!
 //! The returned [`Emoji`] struct has various information about the emoji.
 //! ```
@@ -47,8 +56,8 @@
 //! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 //! ```
 //!
-//! You can use the [`iter()`] function to iterate over all emojis (only includes the
-//! default skin tone versions).
+//! You can use the [`iter()`] function to iterate over all emojis (only
+//! includes the default skin tone versions).
 //! ```
 //! let smiley = emojis::iter().next().unwrap();
 //! assert_eq!(smiley, "😀");
@@ -68,6 +77,15 @@
 //! assert_eq!(grapes, "🍇");
 //! ```
 //!
+//! See [examples/replace.rs] for an example that replaces [gemoji] names in
+//! text.
+//!
+//! ```sh
+//! $ echo "launch :rocket:" | cargo run --example replace
+//! launch 🚀
+//! ```
+//!
+//! [examples/replace.rs]: https://github.com/rossmacarthur/emojis/blob/trunk/examples/replace.rs
 //! [gemoji]: https://github.com/github/gemoji
 
 #![no_std]

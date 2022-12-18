@@ -57,8 +57,21 @@ jobs:
         cargo run --package generate
         git diff --exit-code -- src/gen/
 
+  readme:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-onedoc
+      run: cargo install cargo-onedoc --locked
+
+    - name: Check README
+      run: cargo onedoc --check
+
   publish:
-    needs: [generated, test, msrv]
+    needs: [generated, readme, test, msrv]
     if: startsWith(github.ref, 'refs/tags/')
 
     runs-on: ubuntu-latest
