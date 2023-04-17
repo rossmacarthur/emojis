@@ -82,7 +82,7 @@ jobs:
 
     - name: Calculate version from tag
       id: version
-      run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+      run: echo "value=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
     - name: Check tag against package versions
       run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
