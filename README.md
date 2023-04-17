@@ -11,7 +11,7 @@
 ## Features
 
 - Lookup up emoji by Unicode value
-- Lookup up emoji by [GitHub shortcode](https://github.com/github/gemoji)
+- Lookup up emoji by GitHub shortcode ([gemoji](https://github.com/github/gemoji) v4.1.0)
 - Iterate over emojis in recommended order
 - Iterate over emojis in an emoji group, e.g. “Smileys & Emotion” or “Flags”
 - Iterate over the skin tones for an emoji
