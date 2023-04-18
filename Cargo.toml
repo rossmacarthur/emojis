@@ -1,6 +1,6 @@
 [package]
 name = "emojis"
-version = "0.5.3"
+version = "0.6.0"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2021"
 rust-version = "1.60"
