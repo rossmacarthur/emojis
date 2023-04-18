@@ -36,6 +36,7 @@ fn write_emoji_struct<W: io::Write>(
     group: &str,
     emoji: &unicode::Emoji,
     default_skin_tone_index: usize,
+    skin_tone_count: usize,
 ) -> Result<()> {
     let e = emoji.as_str();
     let name = emoji.name();
@@ -47,7 +48,7 @@ fn write_emoji_struct<W: io::Write>(
     match emoji.skin_tone() {
         Some(tone) => write!(
             w,
-            ", skin_tone: Some(({default_skin_tone_index}, SkinTone::{tone:?}))",
+            ", skin_tone: Some(({default_skin_tone_index}, {skin_tone_count}, SkinTone::{tone:?}))",
         )?,
         None => write!(w, ", skin_tone: None")?,
     }
@@ -67,6 +68,7 @@ fn write_emojis_slice<W: io::Write>(
 ) -> Result<()> {
     let mut i = 0;
     let mut default_skin_tone_index = 0;
+    let mut skin_tone_count = 0;
 
     writeln!(w, "pub const EMOJIS: &[Emoji] = &[")?;
     for (group, subgroups) in unicode_data {
@@ -74,9 +76,17 @@ fn write_emojis_slice<W: io::Write>(
             for emoji in subgroup {
                 if matches!(emoji.skin_tone(), Some(SkinTone::Default)) {
                     default_skin_tone_index = i;
+                    skin_tone_count = emoji.skin_tones();
                 }
                 write!(w, "    ")?;
-                write_emoji_struct(w, github_data, group, emoji, default_skin_tone_index)?;
+                write_emoji_struct(
+                    w,
+                    github_data,
+                    group,
+                    emoji,
+                    default_skin_tone_index,
+                    skin_tone_count,
+                )?;
                 writeln!(w, ",")?;
 
                 unicode_map.insert(emoji.as_str().to_owned(), i.to_string());

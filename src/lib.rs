@@ -112,7 +112,14 @@ pub struct Emoji {
     name: &'static str,
     unicode_version: UnicodeVersion,
     group: Group,
-    skin_tone: Option<(u16, SkinTone)>,
+
+    // Stores the id of the emoji with the default skin tone, the number of
+    // skin tones and then the skin tone of the current emoji.
+    //
+    //     (<id>, <n>, <skin_tone>)
+    //
+    skin_tone: Option<(u16, u8, SkinTone)>,
+
     aliases: Option<&'static [&'static str]>,
 }
 
@@ -125,6 +132,7 @@ pub struct UnicodeVersion {
 
 /// The skin tone of an emoji.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum SkinTone {
     Default,
     Light,
@@ -132,6 +140,26 @@ pub enum SkinTone {
     Medium,
     MediumDark,
     Dark,
+    LightAndMediumLight,
+    LightAndMedium,
+    LightAndMediumDark,
+    LightAndDark,
+    MediumLightAndLight,
+    MediumLightAndMedium,
+    MediumLightAndMediumDark,
+    MediumLightAndDark,
+    MediumAndLight,
+    MediumAndMediumLight,
+    MediumAndMediumDark,
+    MediumAndDark,
+    MediumDarkAndLight,
+    MediumDarkAndMediumLight,
+    MediumDarkAndMedium,
+    MediumDarkAndDark,
+    DarkAndLight,
+    DarkAndMediumLight,
+    DarkAndMedium,
+    DarkAndMediumDark,
 }
 
 impl UnicodeVersion {
@@ -235,7 +263,7 @@ impl Emoji {
     /// assert!(cool.skin_tone().is_none());
     /// ```
     pub fn skin_tone(&self) -> Option<SkinTone> {
-        self.skin_tone.map(|(_, v)| v)
+        self.skin_tone.map(|(_, _, v)| v)
     }
 
     /// Returns an iterator over the emoji and all the related skin tone emojis.
@@ -246,8 +274,18 @@ impl Emoji {
     /// use emojis::Emoji;
     ///
     /// let luck = emojis::get("🤞🏼").unwrap();
-    /// let tones: Vec<_> = luck.skin_tones().unwrap().map(Emoji::as_str).collect();
-    /// assert_eq!(tones, ["🤞", "🤞🏻", "🤞🏼", "🤞🏽", "🤞🏾", "🤞🏿"]);
+    /// let skin_tones: Vec<_> = luck.skin_tones().unwrap().map(Emoji::as_str).collect();
+    /// assert_eq!(skin_tones, ["🤞", "🤞🏻", "🤞🏼", "🤞🏽", "🤞🏾", "🤞🏿"]);
+    /// ```
+    ///
+    /// Some emojis have 26 skin tones!
+    ///
+    /// ```
+    /// use emojis::SkinTone;
+    ///
+    /// let couple = emojis::get("👩🏿‍❤️‍👨🏼").unwrap();
+    /// let skin_tones = couple.skin_tones().unwrap().count();
+    /// assert_eq!(skin_tones, 26);
     /// ```
     ///
     /// For emojis where skin tones are not applicable this will return `None`.
@@ -257,8 +295,8 @@ impl Emoji {
     /// assert!(cool.skin_tones().is_none());
     /// ```
     pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
-        let (i, _) = self.skin_tone?;
-        Some(crate::gen::EMOJIS[i as usize..].iter().take(6))
+        let (i, n, _) = self.skin_tone?;
+        Some(crate::gen::EMOJIS[i as usize..].iter().take(n as usize))
     }
 
     /// Returns a version of this emoji that has the given skin tone.
@@ -275,7 +313,18 @@ impl Emoji {
     /// assert_eq!(peace, emojis::get("🙌🏾").unwrap());
     /// ```
     ///
-    /// For emojis where skin tones are not applicable this will be `None`.
+    /// ```
+    /// use emojis::SkinTone;
+    ///
+    /// let couple = emojis::get("👩‍❤️‍👨")
+    ///     .unwrap()
+    ///     .with_skin_tone(SkinTone::DarkAndMediumLight)
+    ///     .unwrap();
+    /// assert_eq!(couple, emojis::get("👩🏿‍❤️‍👨🏼").unwrap());
+    /// ```
+    ///
+    /// For emojis where the skin tone is not applicable this will return
+    /// `None`.
     ///
     /// ```
     /// use emojis::SkinTone;
