@@ -164,14 +164,17 @@ pub enum SkinTone {
 
 impl UnicodeVersion {
     /// Construct a new version.
+    #[inline]
     pub const fn new(major: u32, minor: u32) -> Self {
         Self { major, minor }
     }
 
+    #[inline]
     pub const fn major(self) -> u32 {
         self.major
     }
 
+    #[inline]
     pub const fn minor(self) -> u32 {
         self.minor
     }
@@ -186,6 +189,7 @@ impl Emoji {
     /// let rocket = emojis::get("🚀").unwrap();
     /// assert_eq!(rocket.as_str(), "🚀")
     /// ```
+    #[inline]
     pub const fn as_str(&self) -> &str {
         self.emoji
     }
@@ -198,6 +202,7 @@ impl Emoji {
     /// let rocket = emojis::get("🚀").unwrap();
     /// assert_eq!(rocket.as_bytes(), &[0xf0, 0x9f, 0x9a, 0x80]);
     /// ```
+    #[inline]
     pub const fn as_bytes(&self) -> &[u8] {
         self.emoji.as_bytes()
     }
@@ -210,6 +215,7 @@ impl Emoji {
     /// let cool = emojis::get("😎").unwrap();
     /// assert_eq!(cool.name(), "smiling face with sunglasses");
     /// ```
+    #[inline]
     pub const fn name(&self) -> &str {
         self.name
     }
@@ -224,6 +230,7 @@ impl Emoji {
     /// let villain = emojis::get("🦹").unwrap();
     /// assert_eq!(villain.unicode_version(), UnicodeVersion::new(11, 0));
     /// ```
+    #[inline]
     pub const fn unicode_version(&self) -> UnicodeVersion {
         self.unicode_version
     }
@@ -238,6 +245,7 @@ impl Emoji {
     /// let flag = emojis::get("🇿🇦").unwrap();
     /// assert_eq!(flag.group(), Group::Flags);
     /// ```
+    #[inline]
     pub const fn group(&self) -> Group {
         self.group
     }
@@ -262,6 +270,7 @@ impl Emoji {
     /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.skin_tone().is_none());
     /// ```
+    #[inline]
     pub fn skin_tone(&self) -> Option<SkinTone> {
         self.skin_tone.map(|(_, _, v)| v)
     }
@@ -294,6 +303,7 @@ impl Emoji {
     /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.skin_tones().is_none());
     /// ```
+    #[inline]
     pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
         let (i, n, _) = self.skin_tone?;
         Some(crate::gen::EMOJIS[i as usize..].iter().take(n as usize))
@@ -332,6 +342,7 @@ impl Emoji {
     /// let cool = emojis::get("😎").unwrap();
     /// assert!(cool.with_skin_tone(SkinTone::Medium).is_none());
     /// ```
+    #[inline]
     pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&'static Self> {
         self.skin_tones()?
             .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
@@ -353,6 +364,7 @@ impl Emoji {
     /// ```
     ///
     /// [gemoji]: https://github.com/github/gemoji
+    #[inline]
     pub fn shortcode(&self) -> Option<&str> {
         self.aliases.and_then(|aliases| aliases.first().copied())
     }
@@ -372,24 +384,28 @@ impl Emoji {
     /// ```
     ///
     /// [gemoji]: https://github.com/github/gemoji
+    #[inline]
     pub fn shortcodes(&self) -> impl Iterator<Item = &str> {
         self.aliases.into_iter().flatten().copied()
     }
 }
 
 impl cmp::PartialEq<Emoji> for Emoji {
+    #[inline]
     fn eq(&self, other: &Emoji) -> bool {
         self.emoji == other.emoji
     }
 }
 
 impl cmp::PartialEq<str> for Emoji {
+    #[inline]
     fn eq(&self, s: &str) -> bool {
         self.as_str() == s
     }
 }
 
 impl cmp::PartialEq<&str> for Emoji {
+    #[inline]
     fn eq(&self, s: &&str) -> bool {
         self.as_str() == *s
     }
@@ -398,24 +414,28 @@ impl cmp::PartialEq<&str> for Emoji {
 impl cmp::Eq for Emoji {}
 
 impl hash::Hash for Emoji {
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.emoji.hash(state);
     }
 }
 
 impl convert::AsRef<str> for Emoji {
+    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl convert::AsRef<[u8]> for Emoji {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
 }
 
 impl fmt::Display for Emoji {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.as_str().fmt(f)
     }
@@ -431,6 +451,7 @@ impl Group {
     /// assert_eq!(iter.next().unwrap(), emojis::Group::SmileysAndEmotion);
     /// assert_eq!(iter.next().unwrap(), emojis::Group::PeopleAndBody);
     /// ```
+    #[inline]
     pub fn iter() -> impl Iterator<Item = Group> {
         [
             Self::SmileysAndEmotion,
@@ -455,6 +476,7 @@ impl Group {
     /// let mut iter = emojis::Group::Flags.emojis();
     /// assert_eq!(iter.next().unwrap(), "🏁");
     /// ```
+    #[inline]
     pub fn emojis(&self) -> impl Iterator<Item = &'static Emoji> {
         let group = *self;
         iter()
@@ -474,6 +496,7 @@ impl Group {
 /// let mut iter = emojis::iter();
 /// assert_eq!(iter.next().unwrap(), "😀");
 /// ```
+#[inline]
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
     crate::gen::EMOJIS
         .iter()
@@ -490,6 +513,7 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 /// let rocket = emojis::get("🚀").unwrap();
 /// assert_eq!(rocket.shortcode().unwrap(), "rocket");
 /// ```
+#[inline]
 pub fn get(s: &str) -> Option<&'static Emoji> {
     crate::gen::unicode::MAP
         .get(s)
@@ -506,6 +530,7 @@ pub fn get(s: &str) -> Option<&'static Emoji> {
 /// let rocket = emojis::get_by_shortcode("rocket").unwrap();
 /// assert_eq!(rocket, "🚀");
 /// ```
+#[inline]
 pub fn get_by_shortcode(s: &str) -> Option<&'static Emoji> {
     crate::gen::shortcode::MAP
         .get(s)
