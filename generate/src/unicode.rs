@@ -7,6 +7,7 @@ use std::str::FromStr;
 use anyhow::{bail, ensure, Context, Result};
 use heck::CamelCase;
 use indexmap::IndexMap;
+use then::Some;
 
 const URL: &str = "https://unicode.org/Public/emoji/15.0/emoji-test.txt";
 
@@ -24,7 +25,7 @@ pub struct UnicodeVersion {
     minor: u32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SkinTone {
     Default,
     Light,
@@ -32,6 +33,26 @@ pub enum SkinTone {
     Medium,
     MediumDark,
     Dark,
+    LightAndMediumLight,
+    LightAndMedium,
+    LightAndMediumDark,
+    LightAndDark,
+    MediumLightAndLight,
+    MediumLightAndMedium,
+    MediumLightAndMediumDark,
+    MediumLightAndDark,
+    MediumAndLight,
+    MediumAndMediumLight,
+    MediumAndMediumDark,
+    MediumAndDark,
+    MediumDarkAndLight,
+    MediumDarkAndMediumLight,
+    MediumDarkAndMedium,
+    MediumDarkAndDark,
+    DarkAndLight,
+    DarkAndMediumLight,
+    DarkAndMedium,
+    DarkAndMediumDark,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -40,7 +61,8 @@ pub struct Emoji {
     name: String,
     unicode_version: UnicodeVersion,
     status: Status,
-    skin_tones: Vec<SkinTone>,
+    skin_tones: usize,
+    skin_tone: Option<SkinTone>,
     variations: Vec<String>,
 }
 
@@ -117,25 +139,26 @@ impl FromStr for UnicodeVersion {
     }
 }
 
-impl SkinTone {
-    fn tones() -> impl Iterator<Item = Self> {
-        IntoIterator::into_iter([
-            Self::Light,
-            Self::MediumLight,
-            Self::Medium,
-            Self::MediumDark,
-            Self::Dark,
-        ])
-    }
+fn skin_tones() -> impl Iterator<Item = SkinTone> {
+    [
+        SkinTone::Light,
+        SkinTone::MediumLight,
+        SkinTone::Medium,
+        SkinTone::MediumDark,
+        SkinTone::Dark,
+    ]
+    .into_iter()
+}
 
-    fn code_point(&self) -> char {
+impl SkinTone {
+    fn code_point(self) -> char {
         match self {
-            Self::Default => unreachable!(),
             Self::Light => '\u{1f3fb}',
             Self::MediumLight => '\u{1f3fc}',
             Self::Medium => '\u{1f3fd}',
             Self::MediumDark => '\u{1f3fe}',
             Self::Dark => '\u{1f3ff}',
+            _ => unreachable!(),
         }
     }
 }
@@ -169,17 +192,44 @@ impl Emoji {
         };
         let skin_tones: Vec<_> = emoji
             .chars()
-            .filter_map(|c| {
-                SkinTone::tones().find_map(|tone| (tone.code_point() == c).then_some(tone))
-            })
+            .filter_map(|c| skin_tones().find_map(|st| (st.code_point() == c).some(st)))
             .collect();
+
+        use SkinTone::*;
+        let skin_tone = match *skin_tones.as_slice() {
+            [] => None,
+            [a] => Some(a),
+            [Light, MediumLight] => Some(LightAndMediumLight),
+            [Light, Medium] => Some(LightAndMedium),
+            [Light, MediumDark] => Some(LightAndMediumDark),
+            [Light, Dark] => Some(LightAndDark),
+            [MediumLight, Light] => Some(MediumLightAndLight),
+            [MediumLight, Medium] => Some(MediumLightAndMedium),
+            [MediumLight, MediumDark] => Some(MediumLightAndMediumDark),
+            [MediumLight, Dark] => Some(MediumLightAndDark),
+            [Medium, Light] => Some(MediumAndLight),
+            [Medium, MediumLight] => Some(MediumAndMediumLight),
+            [Medium, MediumDark] => Some(MediumAndMediumDark),
+            [Medium, Dark] => Some(MediumAndDark),
+            [MediumDark, Light] => Some(MediumDarkAndLight),
+            [MediumDark, MediumLight] => Some(MediumDarkAndMediumLight),
+            [MediumDark, Medium] => Some(MediumDarkAndMedium),
+            [MediumDark, Dark] => Some(MediumDarkAndDark),
+            [Dark, Light] => Some(DarkAndLight),
+            [Dark, MediumLight] => Some(DarkAndMediumLight),
+            [Dark, Medium] => Some(DarkAndMedium),
+            [Dark, MediumDark] => Some(DarkAndMediumDark),
+            [a, b] if a == b => Some(a),
+            _ => bail!("unrecognized skin tone combination, {:?}", skin_tones),
+        };
 
         Ok(Self {
             emoji,
             name,
             unicode_version,
             status,
-            skin_tones,
+            skin_tone,
+            skin_tones: 1,
             variations: Vec::new(),
         })
     }
@@ -197,8 +247,11 @@ impl Emoji {
     }
 
     pub fn skin_tone(&self) -> Option<SkinTone> {
-        assert!(self.skin_tones.len() <= 1);
-        self.skin_tones.get(0).copied()
+        self.skin_tone
+    }
+
+    pub fn skin_tones(&self) -> usize {
+        self.skin_tones
     }
 
     pub fn variations(&self) -> &[String] {
@@ -239,10 +292,9 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
                     }
 
                     Status::FullyQualified => {
-                        match emoji.skin_tones.as_slice() {
-                            [] | [SkinTone::Default] => {
+                        match emoji.skin_tone {
+                            None | Some(SkinTone::Default) => {
                                 // normal emoji, simply add
-
                                 parsed_data
                                     .entry(group.clone())
                                     .or_default()
@@ -251,41 +303,32 @@ fn parse_emoji_data(data: &str) -> Result<ParsedData> {
                                     .push(emoji);
                             }
 
-                            [_] => {
-                                // this emoji has a single skin tone we need to
+                            Some(skin_tone) => {
                                 // find the default skin tone to set it
-                                parsed_data[&group][&subgroup]
-                                    .iter_mut()
-                                    .rev()
-                                    .find(|e| {
-                                        matches!(e.skin_tones.as_slice(), [] | [SkinTone::Default])
-                                            && emoji.name.contains(&emoji.name)
-                                    })
-                                    .with_context(ctx)?
-                                    .skin_tones = vec![SkinTone::Default];
-                                // now add this emoji to the list
-                                parsed_data
+                                let i = {
+                                    let (i, def) = parsed_data[&group][&subgroup]
+                                        .iter_mut()
+                                        .enumerate()
+                                        .rev()
+                                        .find(|(_, e)| {
+                                            matches!(e.skin_tone, None | Some(SkinTone::Default))
+                                                && emoji.name.contains(&emoji.name)
+                                        })
+                                        .with_context(ctx)?;
+                                    def.skin_tone = Some(SkinTone::Default);
+                                    def.skin_tones += 1;
+                                    i
+                                };
+
+                                // now add this emoji to the list making sure to
+                                // be consistent with the ordering of skin tones
+                                let v = parsed_data
                                     .entry(group.clone())
                                     .or_default()
                                     .entry(subgroup.clone())
-                                    .or_insert_with(Vec::new)
-                                    .push(emoji);
-                            }
-
-                            [..] => {
-                                // this emoji has multiple skin tones we need
-                                // to find the default skin tone variation and
-                                // append this emoji to the variations.
-                                parsed_data[&group][&subgroup]
-                                    .iter_mut()
-                                    .rev()
-                                    .find(|e| {
-                                        matches!(e.skin_tones.as_slice(), [] | [SkinTone::Default])
-                                            && emoji.name.contains(&emoji.name)
-                                    })
-                                    .with_context(ctx)?
-                                    .variations
-                                    .push(emoji.emoji);
+                                    .or_insert_with(Vec::new);
+                                let j = v[i..].partition_point(|e| e.skin_tone < Some(skin_tone));
+                                v.insert(i + j, emoji);
                             }
                         }
                     }

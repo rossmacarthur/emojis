@@ -46,15 +46,40 @@ fn emoji_skin_tones() {
         SkinTone::Medium,
         SkinTone::MediumDark,
         SkinTone::Dark,
+        SkinTone::LightAndMediumLight,
+        SkinTone::LightAndMedium,
+        SkinTone::LightAndMediumDark,
+        SkinTone::LightAndDark,
+        SkinTone::MediumLightAndLight,
+        SkinTone::MediumLightAndMedium,
+        SkinTone::MediumLightAndMediumDark,
+        SkinTone::MediumLightAndDark,
+        SkinTone::MediumAndLight,
+        SkinTone::MediumAndMediumLight,
+        SkinTone::MediumAndMediumDark,
+        SkinTone::MediumAndDark,
+        SkinTone::MediumDarkAndLight,
+        SkinTone::MediumDarkAndMediumLight,
+        SkinTone::MediumDarkAndMedium,
+        SkinTone::MediumDarkAndDark,
+        SkinTone::DarkAndLight,
+        SkinTone::DarkAndMediumLight,
+        SkinTone::DarkAndMedium,
+        SkinTone::DarkAndMediumDark,
     ];
+
     for emoji in emojis::iter() {
         match emoji.skin_tone() {
             Some(_) => {
                 let emojis: Vec<_> = emoji.skin_tones().unwrap().collect();
-                assert_eq!(emojis.len(), 6);
+                assert!(emojis.len() == 6 || emojis.len() == 26);
                 let default = emojis[0];
-                for (emoji, skin_tone) in emojis.iter().zip(skin_tones) {
+                for (emoji, skin_tone) in emojis
+                    .iter()
+                    .zip(skin_tones.iter().copied().take(emojis.len()))
+                {
                     assert_eq!(emoji.skin_tone().unwrap(), skin_tone, "{emojis:#?}");
+                    assert_eq!(default.with_skin_tone(skin_tone).unwrap(), *emoji);
                     assert_eq!(emoji.with_skin_tone(SkinTone::Default).unwrap(), default);
                 }
             }
