@@ -7,7 +7,7 @@
 //! - Iterate over emojis in recommended order
 //! - Iterate over emojis in an emoji group, e.g. "Smileys & Emotion" or "Flags"
 //! - Iterate over the skin tones for an emoji
-//! - Uses Unicode v15.0 emoji specification
+//! - Uses [Unicode v15.1](https://unicode.org/emoji/charts-15.1/emoji-released.html) emoji specification
 //!
 //! # Getting started
 //!
@@ -304,7 +304,7 @@ impl Emoji {
     /// assert!(cool.skin_tones().is_none());
     /// ```
     #[inline]
-    pub fn skin_tones(&self) -> Option<impl Iterator<Item = &'static Self>> {
+    pub fn skin_tones(&self) -> Option<impl Iterator<Item = &Self>> {
         let (i, n, _) = self.skin_tone?;
         Some(crate::gen::EMOJIS[i as usize..].iter().take(n as usize))
     }
@@ -343,7 +343,7 @@ impl Emoji {
     /// assert!(cool.with_skin_tone(SkinTone::Medium).is_none());
     /// ```
     #[inline]
-    pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&'static Self> {
+    pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&Self> {
         self.skin_tones()?
             .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
     }

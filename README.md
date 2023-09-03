@@ -2,9 +2,9 @@
 
 # emojis
 
-[![Crates.io Version](https://img.shields.io/crates/v/emojis.svg)](https://crates.io/crates/emojis)
-[![Docs.rs Latest](https://img.shields.io/badge/docs.rs-latest-blue.svg)](https://docs.rs/emojis)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/rossmacarthur/emojis/build.yaml?branch=trunk)](https://github.com/rossmacarthur/emojis/actions/workflows/build.yaml?query=branch%3Atrunk)
+[![Crates.io Version](https://badgers.space/crates/version/emojis)](https://crates.io/crates/emojis)
+[![Docs.rs Latest](https://badgers.space/badge/docs.rs/latest/blue)](https://docs.rs/emojis)
+[![Build Status](https://badgers.space/github/checks/rossmacarthur/emojis?label=build)](https://github.com/rossmacarthur/emojis/actions/workflows/build.yaml)
 
 ✨ Lookup and iterate over emoji names, shortcodes, and groups.
 
@@ -15,7 +15,7 @@
 - Iterate over emojis in recommended order
 - Iterate over emojis in an emoji group, e.g. “Smileys & Emotion” or “Flags”
 - Iterate over the skin tones for an emoji
-- Uses Unicode v15.0 emoji specification
+- Uses [Unicode v15.1](https://unicode.org/emoji/charts-15.1/emoji-released.html) emoji specification
 
 ## Getting started
 

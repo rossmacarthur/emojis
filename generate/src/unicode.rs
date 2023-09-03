@@ -9,7 +9,7 @@ use heck::CamelCase;
 use indexmap::IndexMap;
 use then::Some;
 
-const URL: &str = "https://unicode.org/Public/emoji/15.0/emoji-test.txt";
+const URL: &str = "https://unicode.org/Public/emoji/15.1/emoji-test.txt";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Status {
