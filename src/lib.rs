@@ -1,13 +1,18 @@
-//! ✨ Lookup and iterate over emoji names, shortcodes, and groups.
+//! ✨ Lookup emoji in *O(1)* time, access metadata and GitHub shortcodes,
+//! iterate over all emoji.
 //!
 //! # Features
 //!
 //! - Lookup up emoji by Unicode value
-//! - Lookup up emoji by GitHub shortcode ([gemoji](https://github.com/github/gemoji) v4.1.0)
-//! - Iterate over emojis in recommended order
+//! - Lookup up emoji by GitHub shortcode ([gemoji] v4.1.0)
+//! - Access emoji metadata: name, unicode version, group, skin tone, [gemoji] shortcodes
+//! - Iterate over emojis in Unicode CLDR order
 //! - Iterate over emojis in an emoji group, e.g. "Smileys & Emotion" or "Flags"
 //! - Iterate over the skin tones for an emoji
+//! - Select a specific skin tone for an emoji
 //! - Uses [Unicode v15.1](https://unicode.org/emoji/charts-15.1/emoji-released.html) emoji specification
+//!
+//! [gemoji]: https://github.com/github/gemoji
 //!
 //! # Getting started
 //!
@@ -36,31 +41,48 @@
 //! on [`phf`]. The policy of this crate is to only increase the MSRV in a
 //! breaking release.
 //!
+//! # Breaking changes
+//!
+//! When [gemoji] or the Unicode version is upgraded this is not considered a
+//! breaking change, instead you should make sure to use
+//! [`unicode_version()`][Emoji::unicode_version] to filter out newer versions.
+//!
 //! # Examples
 //!
-//! The returned [`Emoji`] struct has various information about the emoji.
+//! See [examples/replace.rs] for an example that replaces `:gemoji:` names with
+//! real emojis in text.
+//!
+//! ```sh
+//! $ echo "launch :rocket:" | cargo run --example replace
+//! launch 🚀
+//! ```
+//!
+//! [`get()`][get] and [`get_by_shortcode()`][get_by_shortcode] return an
+//! [`Emoji`] struct which contains various metadata regarding the emoji.
 //! ```
 //! let hand = emojis::get("🤌").unwrap();
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
+//! assert_eq!(hand.as_bytes(), &[0xf0, 0x9f, 0xa4, 0x8c]);
 //! assert_eq!(hand.name(), "pinched fingers");
 //! assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 //! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
-//! assert_eq!(hand.shortcode(), Some("pinched_fingers"));
 //! assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));
+//! assert_eq!(hand.shortcode(), Some("pinched_fingers"));
 //! ```
 //!
-//! Another common operation is iterating over the skin tones of an emoji.
+//! Use [`skin_tones()`][Emoji::skin_tones] to iterate over the skin tones of an
+//! emoji.
 //! ```
 //! let raised_hands = emojis::get("🙌🏼").unwrap();
 //! let skin_tones: Vec<_> = raised_hands.skin_tones().unwrap().map(|e| e.as_str()).collect();
 //! assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 //! ```
 //!
-//! You can use the [`iter()`] function to iterate over all emojis (only
-//! includes the default skin tone versions).
+//! You can use the [`iter()`] function to iterate over all emojis. This only
+//! includes the default skin tone versions.
 //! ```
-//! let smiley = emojis::iter().next().unwrap();
-//! assert_eq!(smiley, "😀");
+//! let faces: Vec<_> = emojis::iter().map(|e| e.as_str()).take(5).collect();
+//! assert_eq!(faces, ["😀", "😃", "😄", "😁", "😆"]);
 //! ```
 //!
 //! It is recommended to filter the list by the maximum Unicode version that you
@@ -73,16 +95,8 @@
 //!
 //! Using the [`Group`] enum you can iterate over all emojis in a group.
 //! ```
-//! let grapes = emojis::Group::FoodAndDrink.emojis().next().unwrap();
-//! assert_eq!(grapes, "🍇");
-//! ```
-//!
-//! See [examples/replace.rs] for an example that replaces [gemoji] names in
-//! text.
-//!
-//! ```sh
-//! $ echo "launch :rocket:" | cargo run --example replace
-//! launch 🚀
+//! let fruit: Vec<_> = emojis::Group::FoodAndDrink.emojis().map(|e| e.as_str()).take(5).collect();
+//! assert_eq!(fruit, ["🍇", "🍈", "🍉", "🍊", "🍋"]);
 //! ```
 //!
 //! [examples/replace.rs]: https://github.com/rossmacarthur/emojis/blob/trunk/examples/replace.rs
@@ -207,7 +221,7 @@ impl Emoji {
         self.emoji.as_bytes()
     }
 
-    /// Returns the CLDR short name for this emoji.
+    /// Returns the CLDR name for this emoji.
     ///
     /// # Examples
     ///
@@ -235,7 +249,7 @@ impl Emoji {
         self.unicode_version
     }
 
-    /// Returns this emoji's group.
+    /// Returns the group this emoji belongs to.
     ///
     /// # Examples
     ///
@@ -316,11 +330,11 @@ impl Emoji {
     /// ```
     /// use emojis::SkinTone;
     ///
-    /// let peace = emojis::get("🙌🏼")
+    /// let raised_hands = emojis::get("🙌🏼")
     ///     .unwrap()
     ///     .with_skin_tone(SkinTone::MediumDark)
     ///     .unwrap();
-    /// assert_eq!(peace, emojis::get("🙌🏾").unwrap());
+    /// assert_eq!(raised_hands, emojis::get("🙌🏾").unwrap());
     /// ```
     ///
     /// ```
@@ -348,13 +362,13 @@ impl Emoji {
             .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
     }
 
-    /// Returns this emoji's first GitHub shortcode.
+    /// Returns the first GitHub shortcode for this emoji.
     ///
-    /// Most emojis only have one shortcode but for a few there are multiple.
-    /// Use the [`shortcodes()`][Emoji::shortcodes] method to return all the
-    /// shortcodes.
+    /// Most emojis only have zero or one shortcode but for a few there are
+    /// multiple. Use the [`shortcodes()`][Emoji::shortcodes] method to return
+    /// all the shortcodes. See [gemoji] for more information.
     ///
-    /// See [gemoji] for more information.
+    /// For emojis that have zero shortcodes this will return `None`.
     ///
     /// # Examples
     ///
@@ -369,9 +383,13 @@ impl Emoji {
         self.aliases.and_then(|aliases| aliases.first().copied())
     }
 
-    /// Returns an iterator over this emoji's GitHub shortcodes.
+    /// Returns an iterator over the GitHub shortcodes for this emoji.
     ///
-    /// See [gemoji] for more information.
+    /// Most emojis only have zero or one shortcode but for a few there are
+    /// multiple. Use the [`shortcode()`][Emoji::shortcode] method to return the
+    /// first shortcode. See [gemoji] for more information.
+    ///
+    /// For emojis that have zero shortcodes this will return an empty iterator.
     ///
     /// # Examples
     ///
@@ -473,8 +491,8 @@ impl Group {
     /// # Examples
     ///
     /// ```
-    /// let mut iter = emojis::Group::Flags.emojis();
-    /// assert_eq!(iter.next().unwrap(), "🏁");
+    /// let flags: Vec<_> = emojis::Group::Flags.emojis().map(|e| e.as_str()).take(5).collect();
+    /// assert_eq!(flags, ["🏁", "🚩", "🎌", "🏴", "🏳️"]);
     /// ```
     #[inline]
     pub fn emojis(&self) -> impl Iterator<Item = &'static Emoji> {
@@ -488,13 +506,13 @@ impl Group {
 /// Returns an iterator over all emojis.
 ///
 /// - Ordered by Unicode CLDR data.
-/// - Excludes skin tones.
+/// - Excludes non-default skin tones.
 ///
 /// # Examples
 ///
 /// ```
-/// let mut iter = emojis::iter();
-/// assert_eq!(iter.next().unwrap(), "😀");
+/// let faces: Vec<_> = emojis::iter().map(|e| e.as_str()).take(5).collect();
+/// assert_eq!(faces, ["😀", "😃", "😄", "😁", "😆"]);
 /// ```
 #[inline]
 pub fn iter() -> impl Iterator<Item = &'static Emoji> {
@@ -507,11 +525,30 @@ pub fn iter() -> impl Iterator<Item = &'static Emoji> {
 ///
 /// This take *Ο(1)* time.
 ///
+/// # Note
+///
+/// If passed a minimally qualified or unqualified emoji this will return the
+/// emoji struct containing the fully qualified version.
+///
 /// # Examples
 ///
+/// In the ordinary case.
+///
 /// ```
-/// let rocket = emojis::get("🚀").unwrap();
+/// let emoji = "🚀";
+/// let rocket = emojis::get(emoji).unwrap();
+/// assert!(rocket.as_str() == emoji);
 /// assert_eq!(rocket.shortcode().unwrap(), "rocket");
+/// ```
+///
+/// For a minimally qualified or unqualified emoji.
+///
+/// ```
+/// let unqualified = "\u{1f43f}";
+/// let fully_qualified = "\u{1f43f}\u{fe0f}";
+/// let chipmunk = emojis::get(unqualified).unwrap();
+/// assert_eq!(chipmunk.as_str(), fully_qualified);
+/// assert_eq!(chipmunk.shortcode().unwrap(), "chipmunk");
 /// ```
 #[inline]
 pub fn get(s: &str) -> Option<&'static Emoji> {

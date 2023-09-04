@@ -6,15 +6,18 @@
 [![Docs.rs Latest](https://badgers.space/badge/docs.rs/latest/blue)](https://docs.rs/emojis)
 [![Build Status](https://badgers.space/github/checks/rossmacarthur/emojis?label=build)](https://github.com/rossmacarthur/emojis/actions/workflows/build.yaml)
 
-✨ Lookup and iterate over emoji names, shortcodes, and groups.
+✨ Lookup emoji in *O(1)* time, access metadata and GitHub shortcodes,
+iterate over all emoji.
 
 ## Features
 
 - Lookup up emoji by Unicode value
-- Lookup up emoji by GitHub shortcode ([gemoji](https://github.com/github/gemoji) v4.1.0)
-- Iterate over emojis in recommended order
+- Lookup up emoji by GitHub shortcode ([gemoji] v4.1.0)
+- Access emoji metadata: name, unicode version, group, skin tone, [gemoji] shortcodes
+- Iterate over emojis in Unicode CLDR order
 - Iterate over emojis in an emoji group, e.g. “Smileys & Emotion” or “Flags”
 - Iterate over the skin tones for an emoji
+- Select a specific skin tone for an emoji
 - Uses [Unicode v15.1](https://unicode.org/emoji/charts-15.1/emoji-released.html) emoji specification
 
 ## Getting started
@@ -45,21 +48,38 @@ Currently the minimum supported Rust version is 1.60 due to the dependency
 on `phf`. The policy of this crate is to only increase the MSRV in a
 breaking release.
 
+## Breaking changes
+
+When [gemoji] or the Unicode version is upgraded this is not considered a
+breaking change, instead you should make sure to use
+`unicode_version()` to filter out newer versions.
+
 ## Examples
 
-The returned `Emoji` struct has various information about the emoji.
+See [examples/replace.rs] for an example that replaces `:gemoji:` names with
+real emojis in text.
+
+```sh
+$ echo "launch :rocket:" | cargo run --example replace
+launch 🚀
+```
+
+`get()` and `get_by_shortcode()` return an
+`Emoji` struct which contains various metadata regarding the emoji.
 
 ```rust
 let hand = emojis::get("🤌").unwrap();
 assert_eq!(hand.as_str(), "\u{1f90c}");
+assert_eq!(hand.as_bytes(), &[0xf0, 0x9f, 0xa4, 0x8c]);
 assert_eq!(hand.name(), "pinched fingers");
 assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
-assert_eq!(hand.shortcode(), Some("pinched_fingers"));
 assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));
+assert_eq!(hand.shortcode(), Some("pinched_fingers"));
 ```
 
-Another common operation is iterating over the skin tones of an emoji.
+Use `skin_tones()` to iterate over the skin tones of an
+emoji.
 
 ```rust
 let raised_hands = emojis::get("🙌🏼").unwrap();
@@ -67,12 +87,12 @@ let skin_tones: Vec<_> = raised_hands.skin_tones().unwrap().map(|e| e.as_str()).
 assert_eq!(skin_tones, ["🙌", "🙌🏻", "🙌🏼", "🙌🏽", "🙌🏾", "🙌🏿"]);
 ```
 
-You can use the `iter()` function to iterate over all emojis (only
-includes the default skin tone versions).
+You can use the `iter()` function to iterate over all emojis. This only
+includes the default skin tone versions.
 
 ```rust
-let smiley = emojis::iter().next().unwrap();
-assert_eq!(smiley, "😀");
+let faces: Vec<_> = emojis::iter().map(|e| e.as_str()).take(5).collect();
+assert_eq!(faces, ["😀", "😃", "😄", "😁", "😆"]);
 ```
 
 It is recommended to filter the list by the maximum Unicode version that you
@@ -87,16 +107,8 @@ let iter = emojis::iter().filter(|e| {
 Using the `Group` enum you can iterate over all emojis in a group.
 
 ```rust
-let grapes = emojis::Group::FoodAndDrink.emojis().next().unwrap();
-assert_eq!(grapes, "🍇");
-```
-
-See [examples/replace.rs] for an example that replaces [gemoji] names in
-text.
-
-```sh
-$ echo "launch :rocket:" | cargo run --example replace
-launch 🚀
+let fruit: Vec<_> = emojis::Group::FoodAndDrink.emojis().map(|e| e.as_str()).take(5).collect();
+assert_eq!(fruit, ["🍇", "🍈", "🍉", "🍊", "🍋"]);
 ```
 
 [gemoji]: https://github.com/github/gemoji
