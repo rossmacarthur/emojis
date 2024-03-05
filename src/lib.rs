@@ -515,10 +515,23 @@ impl Group {
 /// assert_eq!(faces, ["😀", "😃", "😄", "😁", "😆"]);
 /// ```
 #[inline]
-pub fn iter() -> impl Iterator<Item = &'static Emoji> {
+pub fn iter() -> impl Iterator<Item = &'static Emoji> + Clone {
     crate::gen::EMOJIS
         .iter()
         .filter(|emoji| matches!(emoji.skin_tone(), Some(SkinTone::Default) | None))
+}
+
+/// Returns an iterator over all shortcodes.
+///
+/// # Examples
+///
+/// ```
+/// let shortcodes: Vec<_> = emojis::shortcodes().take(3).collect();
+/// assert_eq!(shortcodes, ["algeria", "pouting_face", "waning_crescent_moon"]);
+/// ```
+#[inline]
+pub fn shortcodes() -> impl Iterator<Item = &'static str> + Clone {
+    crate::gen::shortcode::MAP.keys().into_iter().copied()
 }
 
 /// Lookup an emoji by Unicode value.
