@@ -25,12 +25,12 @@ jobs:
       run: cargo fmt -- --check
 
     - name: Clippy
-      run: cargo clippy --workspace --all-targets
+      run: cargo clippy --workspace --all-targets --all-features
 
     - name: Test
       run: |
-        cargo test --workspace --all-targets
-        cargo test --workspace --doc
+        cargo test --workspace --all-targets --all-features
+        cargo test --workspace --doc --all-features
 
   msrv:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.60
 
       - name: Test
-        run: cargo test
+        run: cargo test --all-features
 
   generated:
     runs-on: ubuntu-latest

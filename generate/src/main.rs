@@ -19,6 +19,10 @@ fn write_group_enum<W: io::Write>(w: &mut W, unicode_data: &unicode::ParsedData)
         w,
         "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]"
     )?;
+    writeln!(
+        w,
+        r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+    )?;
     writeln!(w, "pub enum Group {{")?;
     for name in unicode_data.keys() {
         if name == "Component" {

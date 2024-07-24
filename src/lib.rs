@@ -139,6 +139,7 @@ pub struct Emoji {
 
 /// A Unicode version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnicodeVersion {
     major: u32,
     minor: u32,
@@ -146,6 +147,7 @@ pub struct UnicodeVersion {
 
 /// The skin tone of an emoji.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum SkinTone {
     Default,
@@ -456,6 +458,43 @@ impl fmt::Display for Emoji {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.as_str().fmt(f)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for &'static Emoji {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for &'static Emoji {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = &'static Emoji;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("a string representing an emoji")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                crate::get(value).ok_or_else(|| E::custom("invalid emoji"))
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
     }
 }
 

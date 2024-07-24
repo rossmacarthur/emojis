@@ -11,6 +11,7 @@ use crate::{Emoji, SkinTone, UnicodeVersion};
 ///
 /// Based on Unicode CLDR data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Group {
    SmileysAndEmotion,
    PeopleAndBody,
