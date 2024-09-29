@@ -18,7 +18,7 @@ iterate over all emoji.
 - Iterate over emojis in an emoji group, e.g. “Smileys & Emotion” or “Flags”
 - Iterate over the skin tones for an emoji
 - Select a specific skin tone for an emoji
-- Uses [Unicode v15.1](https://unicode.org/emoji/charts-15.1/emoji-released.html) emoji specification
+- Uses [Unicode v16.0](https://unicode.org/emoji/charts-16.0/emoji-released.html) emoji specification
 
 ## Getting started
 
