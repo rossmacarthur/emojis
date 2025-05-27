@@ -120,7 +120,7 @@ pub use crate::gen::Group;
 ///
 /// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for
 /// more information.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Emoji {
     emoji: &'static str,
     name: &'static str,
