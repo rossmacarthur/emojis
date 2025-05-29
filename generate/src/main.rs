@@ -2,7 +2,9 @@ mod github;
 mod unicode;
 
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
+use std::hash::Hasher;
 use std::io;
 use std::io::Write as _;
 use std::path::PathBuf;
@@ -114,12 +116,31 @@ fn write_emojis_slice<W: io::Write>(
 }
 
 fn write_phf_map<W: io::Write>(w: &mut W, map: HashMap<String, String>) -> Result<()> {
-    write!(w, "pub static MAP: ::phf::Map<&'static str, usize> = ")?;
+    /// By default phf formats string keys using the Rust debug implementation,
+    /// which uses escape sequences for some Unicode code points. But this means
+    /// as the Rust version is updated the generated code will change. None of
+    /// the keys in our maps contain characters that would cause invalid Rust
+    /// syntax so we use a custom type that formats the strings as-is.
+    #[derive(Hash, PartialEq, Eq)]
+    struct NoEscapeStr<'a>(&'a str);
+
+    impl phf_shared::PhfHash for NoEscapeStr<'_> {
+        fn phf_hash<H: Hasher>(&self, state: &mut H) {
+            phf_shared::PhfHash::phf_hash(self.0, state);
+        }
+    }
+    impl phf_shared::FmtConst for NoEscapeStr<'_> {
+        fn fmt_const(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "\"{}\"", self.0)
+        }
+    }
+
+    write!(w, "pub static MAP: phf::Map<&'static str, usize> = ")?;
     let mut gen = phf_codegen::Map::new();
     for (key, value) in &map {
-        gen.entry(key, value);
+        gen.entry(NoEscapeStr(key), value);
     }
-    writeln!(w, "{};", gen.build())?;
+    writeln!(w, "{};", gen.phf_path("phf").build())?;
     Ok(())
 }
 

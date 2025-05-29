@@ -69,6 +69,7 @@ dependencies = [
  "heck",
  "indexmap",
  "phf_codegen",
+ "phf_shared",
  "serde",
  "serde_json",
  "then",
