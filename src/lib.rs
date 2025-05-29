@@ -22,12 +22,13 @@
 //! cargo add emojis
 //! ```
 //!
-//! Simply use the `get()` function to lookup emojis by Unicode value.
+//! Simply use the [`get()`][get] function to lookup emojis by Unicode value.
 //! ```
 //! let rocket = emojis::get("🚀").unwrap();
 //! ```
 //!
-//! Or the `get_by_shortcode()` function to lookup emojis by [gemoji] shortcode.
+//! Or the [`get_by_shortcode()`][get_by_shortcode] function to lookup emojis by
+//! [gemoji] shortcode.
 //!
 //! ```
 //! let rocket = emojis::get_by_shortcode("rocket").unwrap();
@@ -97,6 +98,27 @@
 //! ```
 //! let fruit: Vec<_> = emojis::Group::FoodAndDrink.emojis().map(|e| e.as_str()).take(5).collect();
 //! assert_eq!(fruit, ["🍇", "🍈", "🍉", "🍊", "🍋"]);
+//! ```
+//!
+//! ### Storing the [`Emoji`] type
+//!
+//! If you want to store the [`Emoji`] type in a data structure, you should
+//! store it as static reference: `&'static Emoji`. This crate intentionally
+//! does not provide any constructors or implement [`Clone`] or [`Copy`] for
+//! [`Emoji`]. `&'static Emoji` supports [`serde`] serialization and
+//! deserialization, *not* `Emoji`.
+//!
+//! For example:
+//!
+//! ```
+//! #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+//! enum Example {
+//!     Rocket {
+//!         value: &'static emojis::Emoji
+//!     },
+//! }
+//!
+//! Example::Rocket { value: emojis::get("🚀").unwrap() };
 //! ```
 //!
 //! [examples/replace.rs]: https://github.com/rossmacarthur/emojis/blob/trunk/examples/replace.rs
