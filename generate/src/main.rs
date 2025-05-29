@@ -139,7 +139,7 @@ fn main() -> Result<()> {
     fs::create_dir_all(&dir)?;
 
     let mut f = fs::File::create(dir.join("mod.rs"))?;
-    writeln!(f, "{}", HEADER)?;
+    writeln!(f, "{HEADER}")?;
     writeln!(f, "#![cfg_attr(rustfmt, rustfmt::skip)]\n")?;
     writeln!(f, "pub mod shortcode;")?;
     writeln!(f, "pub mod unicode;\n")?;
@@ -156,11 +156,11 @@ fn main() -> Result<()> {
     )?;
 
     let mut f = fs::File::create(dir.join("unicode.rs"))?;
-    writeln!(f, "{}", HEADER)?;
+    writeln!(f, "{HEADER}")?;
     write_phf_map(&mut f, unicode_map)?;
 
     let mut f = fs::File::create(dir.join("shortcode.rs"))?;
-    writeln!(f, "{}", HEADER)?;
+    writeln!(f, "{HEADER}")?;
     write_phf_map(&mut f, shortcode_map)?;
 
     Ok(())

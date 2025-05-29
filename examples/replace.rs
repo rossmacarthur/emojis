@@ -37,7 +37,7 @@ fn replace(mut s: &str, mut o: impl Write) -> io::Result<()> {
         match emojis::get_by_shortcode(&s[m..n]) {
             Some(emoji) => {
                 // Output everything preceding, except the first colon.
-                o.write_all(s[..i].as_bytes())?;
+                o.write_all(&s.as_bytes()[..i])?;
                 // Output the emoji.
                 o.write_all(emoji.as_bytes())?;
                 // Update the string to past the last colon.
@@ -45,7 +45,7 @@ fn replace(mut s: &str, mut o: impl Write) -> io::Result<()> {
             }
             None => {
                 // Output everything preceding but not including the colon.
-                o.write_all(s[..n].as_bytes())?;
+                o.write_all(&s.as_bytes()[..n])?;
                 // Update the string to start with the last colon.
                 s = &s[n..];
             }
