@@ -1,8 +1,10 @@
 # 📝 Release notes
 
-## 0.6.5
+## 0.7.0
 
 *Unreleased*
+
+- [Upgrade to `phf v0.12.1`][todo]. This raises the minimum supported Rust version to 1.61.0.
 
 - [Improve codegen to not change with Rust version][640a3f18]. Previously the
   debug format for string keys was used to construct the `phf` maps which used

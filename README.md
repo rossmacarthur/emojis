@@ -45,7 +45,7 @@ These operations take *Ο(1)* time.
 
 ## MSRV
 
-Currently the minimum supported Rust version is 1.60 due to the dependency
+Currently the minimum supported Rust version is 1.61 due to the dependency
 on `phf`. The policy of this crate is to only increase the MSRV in a
 breaking release.
 

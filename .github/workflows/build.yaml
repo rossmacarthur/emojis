@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.60
+      - uses: dtolnay/rust-toolchain@1.61
 
       - name: Test
         run: cargo test --all-features
