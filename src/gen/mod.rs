@@ -5,24 +5,7 @@
 pub mod shortcode;
 pub mod unicode;
 
-use crate::{Emoji, SkinTone, UnicodeVersion};
-
-/// A category for an emoji.
-///
-/// Based on Unicode CLDR data.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Group {
-   SmileysAndEmotion,
-   PeopleAndBody,
-   AnimalsAndNature,
-   FoodAndDrink,
-   TravelAndPlaces,
-   Activities,
-   Objects,
-   Symbols,
-   Flags,
-}
+use crate::{Emoji, Group, SkinTone, UnicodeVersion};
 
 pub const EMOJIS: &[Emoji] = &[
     Emoji { emoji: "😀", name: "grinning face", unicode_version: UnicodeVersion { major: 1, minor: 0 }, group: Group::SmileysAndEmotion, skin_tone: None, aliases: Some(&["grinning"]) },

@@ -136,8 +136,6 @@ use core::convert;
 use core::fmt;
 use core::hash;
 
-pub use crate::gen::Group;
-
 /// Represents an emoji.
 ///
 /// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for
@@ -165,6 +163,23 @@ pub struct Emoji {
 pub struct UnicodeVersion {
     major: u32,
     minor: u32,
+}
+
+/// A category for an emoji.
+///
+/// Based on Unicode CLDR data.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum Group {
+    SmileysAndEmotion,
+    PeopleAndBody,
+    AnimalsAndNature,
+    FoodAndDrink,
+    TravelAndPlaces,
+    Activities,
+    Objects,
+    Symbols,
+    Flags,
 }
 
 /// The skin tone of an emoji.

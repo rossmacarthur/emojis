@@ -78,7 +78,7 @@ fn emoji_skin_tones() {
                     .iter()
                     .zip(skin_tones.iter().copied().take(emojis.len()))
                 {
-                    assert_eq!(emoji.skin_tone().unwrap(), skin_tone, "{emojis:#?}");
+                    assert_eq!(emoji.skin_tone().unwrap(), skin_tone);
                     assert_eq!(default.with_skin_tone(skin_tone).unwrap(), *emoji);
                     assert_eq!(emoji.with_skin_tone(SkinTone::Default).unwrap(), default);
                 }
