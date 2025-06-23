@@ -66,13 +66,9 @@ pub struct UnicodeVersion {
 }
 
 pub fn parse() -> Result<Vec<Entry>> {
-    let data = fetch_emoji_data()?;
+    let data = util::cached_download(URL)?;
     let entries = parse_emoji_data(&data)?;
     Ok(entries)
-}
-
-fn fetch_emoji_data() -> Result<String> {
-    util::cached_download(URL)
 }
 
 fn parse_emoji_data(data: &str) -> Result<Vec<Entry>> {

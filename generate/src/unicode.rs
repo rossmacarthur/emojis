@@ -1,6 +1,7 @@
 //! Fetch and parse raw emoji data from Unicode.org.
 
 mod data;
+mod variations;
 
 use std::str;
 
@@ -12,7 +13,10 @@ use serde::Serialize;
 pub use crate::unicode::data::Group;
 use crate::unicode::data::Status;
 
-pub type ParsedData = Vec<Emoji>;
+pub struct ParsedData {
+    pub emojis: Vec<Emoji>,
+    pub variations: Vec<String>,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Emoji {
@@ -59,7 +63,8 @@ impl Emoji {
 }
 
 pub fn build() -> Result<ParsedData> {
-    let mut emojis = ParsedData::new();
+    let mut emojis: Vec<Emoji> = Vec::new();
+    let variations = variations::parse()?;
 
     for entry in data::parse()? {
         if let Group::Component = entry.group {
@@ -136,7 +141,7 @@ pub fn build() -> Result<ParsedData> {
         }
     }
 
-    Ok(emojis)
+    Ok(ParsedData { emojis, variations })
 }
 
 fn parse_skin_tone(entry: &data::Entry) -> Result<Option<SkinTone>> {

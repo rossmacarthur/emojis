@@ -4,17 +4,22 @@
 
 *Unreleased*
 
-- [Upgrade to `phf v0.12.1`][todo]. This raises the minimum supported Rust version to 1.61.0.
+- [Add missing emoji variation sequences][todo]. The Unicode specification allows for suffixing some
+  sequences with `\u{fe0f}` to request an emoji presentation of the sequence. This change adds the
+  missing sequences defined [here](https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt)
+  to the Unicode map.
+
+- [Upgrade to `phf v0.12.1`][5c8969fe]. This raises the minimum supported Rust version to 1.61.0.
 
 - [Improve codegen to not change with Rust version][640a3f18]. Previously the
   debug format for string keys was used to construct the `phf` maps which used
   escape sequences for some Unicode code points. But this meant as the Rust
-  version is updated the generated code would change. Reduces the file size of
-  the Unicode map by about 12%.
+  version is updated the generated code would change.
 
 - [Add "# Storing the `Emoji` type" section to docs][c40b8923]. Clarify how to
   store the `&'static Emoji` type.
 
+[5c8969fe]: https://github.com/rossmacarthur/emojis/commit/5c8969fe4daad470aa381d3be52c9a7bb20fa48f
 [640a3f18]: https://github.com/rossmacarthur/emojis/commit/640a3f18918603b5a9c6196f0cf4864bc5b8da16
 [c40b8923]: https://github.com/rossmacarthur/emojis/commit/c40b8923b637509188e7dc47a180e8c708e85246
 
