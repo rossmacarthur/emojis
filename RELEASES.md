@@ -2,11 +2,11 @@
 
 ## 0.7.0
 
-*Unreleased*
+*June 24th, 2025*
 
-- [Add missing emoji variation sequences][todo]. The Unicode specification allows for suffixing some
-  sequences with `\u{fe0f}` to request an emoji presentation of the sequence. This change adds the
-  missing sequences defined [here](https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt)
+- [Add missing emoji variation sequences][4ef3c598]. The Unicode specification allows for suffixing
+  some sequences with `\u{fe0f}` to request an emoji presentation of the sequence. This change adds
+  the missing sequences defined [here](https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt)
   to the Unicode map.
 
 - [Upgrade to `phf v0.12.1`][5c8969fe]. This raises the minimum supported Rust version to 1.61.0.
@@ -19,6 +19,7 @@
 - [Add "# Storing the `Emoji` type" section to docs][c40b8923]. Clarify how to
   store the `&'static Emoji` type.
 
+[4ef3c598]: https://github.com/rossmacarthur/emojis/commit/4ef3c5982b7de18c999857bb76d1e07a855654a9
 [5c8969fe]: https://github.com/rossmacarthur/emojis/commit/5c8969fe4daad470aa381d3be52c9a7bb20fa48f
 [640a3f18]: https://github.com/rossmacarthur/emojis/commit/640a3f18918603b5a9c6196f0cf4864bc5b8da16
 [c40b8923]: https://github.com/rossmacarthur/emojis/commit/c40b8923b637509188e7dc47a180e8c708e85246
