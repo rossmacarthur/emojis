@@ -154,7 +154,7 @@ pub struct Emoji {
     //
     skin_tone: Option<(u16, u8, SkinTone)>,
 
-    aliases: Option<&'static [&'static str]>,
+    shortcodes: Option<&'static [&'static str]>,
 }
 
 /// A Unicode version.
@@ -419,7 +419,8 @@ impl Emoji {
     /// [gemoji]: https://github.com/github/gemoji
     #[inline]
     pub fn shortcode(&self) -> Option<&str> {
-        self.aliases.and_then(|aliases| aliases.first().copied())
+        self.shortcodes
+            .and_then(|shortcode| shortcode.first().copied())
     }
 
     /// Returns an iterator over the GitHub shortcodes for this emoji.
@@ -443,7 +444,7 @@ impl Emoji {
     /// [gemoji]: https://github.com/github/gemoji
     #[inline]
     pub fn shortcodes(&self) -> impl Iterator<Item = &str> + Clone {
-        self.aliases.into_iter().flatten().copied()
+        self.shortcodes.into_iter().flatten().copied()
     }
 }
 

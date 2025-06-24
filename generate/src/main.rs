@@ -106,10 +106,10 @@ fn write_emojis_slice<W: io::Write>(
             unicode_map.insert(v.to_owned(), i.to_string());
         }
 
-        if let Some(aliases) = &github_data.get(emoji.as_str()) {
-            for alias in &**aliases {
+        if let Some(shortcodes) = &github_data.get(emoji.as_str()) {
+            for shortcode in &**shortcodes {
                 assert!(shortcode_map
-                    .insert(alias.to_owned(), i.to_string())
+                    .insert(shortcode.to_owned(), i.to_string())
                     .is_none());
             }
         }
@@ -142,8 +142,8 @@ fn write_emoji_struct<W: io::Write>(
         None => write!(w, ", skin_tone: None")?,
     }
     match &github_data.get(e) {
-        Some(github) => write!(w, ", aliases: Some(&{:?}) }}", &github)?,
-        None => write!(w, ", aliases: None }}")?,
+        Some(github) => write!(w, ", shortcodes: Some(&{:?}) }}", &github)?,
+        None => write!(w, ", shortcodes: None }}")?,
     }
     Ok(())
 }
