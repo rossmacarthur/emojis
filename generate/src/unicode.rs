@@ -72,7 +72,7 @@ pub fn build() -> Result<ParsedData> {
         }
 
         match entry.status {
-            Status::Component => continue,
+            Status::Component => unreachable!(),
             Status::MinimallyQualified | Status::Unqualified => {
                 // find fully qualified variation
                 emojis

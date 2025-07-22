@@ -187,32 +187,32 @@ pub enum Group {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum SkinTone {
-    Default,
-    Light,
-    MediumLight,
-    Medium,
-    MediumDark,
-    Dark,
-    LightAndMediumLight,
-    LightAndMedium,
-    LightAndMediumDark,
-    LightAndDark,
-    MediumLightAndLight,
-    MediumLightAndMedium,
-    MediumLightAndMediumDark,
-    MediumLightAndDark,
-    MediumAndLight,
-    MediumAndMediumLight,
-    MediumAndMediumDark,
-    MediumAndDark,
-    MediumDarkAndLight,
-    MediumDarkAndMediumLight,
-    MediumDarkAndMedium,
-    MediumDarkAndDark,
-    DarkAndLight,
-    DarkAndMediumLight,
-    DarkAndMedium,
-    DarkAndMediumDark,
+    Default = 0,
+    Light = 1,
+    MediumLight = 2,
+    Medium = 3,
+    MediumDark = 4,
+    Dark = 5,
+    LightAndMediumLight = 6,
+    LightAndMedium = 7,
+    LightAndMediumDark = 8,
+    LightAndDark = 9,
+    MediumLightAndLight = 10,
+    MediumLightAndMedium = 11,
+    MediumLightAndMediumDark = 12,
+    MediumLightAndDark = 13,
+    MediumAndLight = 14,
+    MediumAndMediumLight = 15,
+    MediumAndMediumDark = 16,
+    MediumAndDark = 17,
+    MediumDarkAndLight = 18,
+    MediumDarkAndMediumLight = 19,
+    MediumDarkAndMedium = 20,
+    MediumDarkAndDark = 21,
+    DarkAndLight = 22,
+    DarkAndMediumLight = 23,
+    DarkAndMedium = 24,
+    DarkAndMediumDark = 25,
 }
 
 impl UnicodeVersion {
@@ -397,8 +397,11 @@ impl Emoji {
     /// ```
     #[inline]
     pub fn with_skin_tone(&self, skin_tone: SkinTone) -> Option<&Self> {
-        self.skin_tones()?
-            .find(|emoji| emoji.skin_tone().unwrap() == skin_tone)
+        // This works because in the generated code we explicitly order skin tone
+        // variants in the order of the SkinTone enum variants.
+        // See file://../generate/src/unicode.rs
+        let (i, _, _) = self.skin_tone?;
+        Some(&crate::gen::EMOJIS[(i as usize) + (skin_tone as usize)])
     }
 
     /// Returns the first GitHub shortcode for this emoji.
