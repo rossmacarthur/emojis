@@ -53,6 +53,16 @@ fn main() -> Result<()> {
         f,
         "use crate::{{Emoji, Group, SkinTone, UnicodeVersion}};\n"
     )?;
+    writeln!(
+        f,
+        "/// The version of [Unicode](https://www.unicode.org/) that the emojis are based on."
+    )?;
+    writeln!(
+        f,
+        "pub const UNICODE_VERSION: UnicodeVersion = UnicodeVersion::new({}, {});\n",
+        unicode::VERSION_MAJOR,
+        unicode::VERSION_MINOR
+    )?;
     write_emojis_slice(
         &mut f,
         &unicode_data,

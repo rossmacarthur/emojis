@@ -136,6 +136,8 @@ use core::convert;
 use core::fmt;
 use core::hash;
 
+pub use crate::gen::UNICODE_VERSION;
+
 /// Represents an emoji.
 ///
 /// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for

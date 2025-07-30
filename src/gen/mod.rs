@@ -7,6 +7,9 @@ pub mod unicode;
 
 use crate::{Emoji, Group, SkinTone, UnicodeVersion};
 
+/// The version of [Unicode](https://www.unicode.org/) that the emojis are based on.
+pub const UNICODE_VERSION: UnicodeVersion = UnicodeVersion::new(16, 0);
+
 pub const EMOJIS: &[Emoji] = &[
     Emoji { emoji: "😀", name: "grinning face", unicode_version: UnicodeVersion { major: 1, minor: 0 }, group: Group::SmileysAndEmotion, skin_tone: None, shortcodes: Some(&["grinning"]) },
     Emoji { emoji: "😃", name: "grinning face with big eyes", unicode_version: UnicodeVersion { major: 0, minor: 6 }, group: Group::SmileysAndEmotion, skin_tone: None, shortcodes: Some(&["smiley"]) },

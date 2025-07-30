@@ -1,9 +1,19 @@
 use anyhow::Context as _;
 use anyhow::Result;
+use constcat::concat;
 
+use crate::unicode::{VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH};
 use crate::util;
 
-const URL: &str = "https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt";
+const URL: &str = concat!(
+    "https://unicode.org/Public/",
+    VERSION_MAJOR,
+    ".",
+    VERSION_MINOR,
+    ".",
+    VERSION_PATCH,
+    "/ucd/emoji/emoji-variation-sequences.txt"
+);
 
 pub fn parse() -> Result<Vec<String>> {
     let data = util::cached_download(URL)?;

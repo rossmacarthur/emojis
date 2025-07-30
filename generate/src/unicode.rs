@@ -13,6 +13,10 @@ use serde::Serialize;
 pub use crate::unicode::data::Group;
 use crate::unicode::data::Status;
 
+pub const VERSION_MAJOR: &str = "16";
+pub const VERSION_MINOR: &str = "0";
+pub const VERSION_PATCH: &str = "0";
+
 pub struct ParsedData {
     pub emojis: Vec<Emoji>,
     pub variations: Vec<String>,

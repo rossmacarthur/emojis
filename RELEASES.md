@@ -1,15 +1,25 @@
 # 📝 Release notes
 
+## 0.7.1
+
+*Unreleased*
+
+- [Expose the Unicode version that the emojis are based on][todo]. Adds a public
+  constant `UNICODE_VERSION` which is the version of the Unicode specification
+  used to generate the emojis in this crate.
+
 ## 0.7.0
 
 *June 24th, 2025*
 
-- [Add missing emoji variation sequences][4ef3c598]. The Unicode specification allows for suffixing
-  some sequences with `\u{fe0f}` to request an emoji presentation of the sequence. This change adds
-  the missing sequences defined [here](https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt)
+- [Add missing emoji variation sequences][4ef3c598]. The Unicode specification
+  allows for suffixing some sequences with `\u{fe0f}` to request an emoji
+  presentation of the sequence. This change adds the missing sequences defined
+  [here](https://unicode.org/Public/16.0.0/ucd/emoji/emoji-variation-sequences.txt)
   to the Unicode map.
 
-- [Upgrade to `phf v0.12.1`][5c8969fe]. This raises the minimum supported Rust version to 1.61.0.
+- [Upgrade to `phf v0.12.1`][5c8969fe]. This raises the minimum supported Rust
+  version to 1.61.0.
 
 - [Improve codegen to not change with Rust version][640a3f18]. Previously the
   debug format for string keys was used to construct the `phf` maps which used
@@ -28,15 +38,9 @@
 
 *September 29th, 2024*
 
-- [Improve codegen to not change with Rust version][640a3f18]. Previously the
-  debug format for string keys was used to construct the `phf` maps which used
-  escape sequences for some Unicode code points. This meant as the Rust version
-  is updated the generated code would change.
-
 - [Update to Unicode 16.0 emojis][2ce453c8].
   *Contributed by [**Linda_pp**](https://github.com/rhysd)*
 
-[640a3f18]: https://github.com/rossmacarthur/emojis/commit/640a3f18918603b5a9c6196f0cf4864bc5b8da16
 [2ce453c8]: https://github.com/rossmacarthur/emojis/commit/2ce453c88d795a54c4ca41839b14ecf81b24b63d
 
 ## 0.6.3

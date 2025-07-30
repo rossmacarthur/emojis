@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.38"
+constcat = "0.6.1"
 curl = "0.4.46"
 hex = "0.4.3"
 indexmap = "1.6.1"

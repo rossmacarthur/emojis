@@ -4,11 +4,19 @@ use anyhow::bail;
 use anyhow::ensure;
 use anyhow::Context as _;
 use anyhow::Result;
+use constcat::concat;
 use serde::Serialize;
 
+use crate::unicode::{VERSION_MAJOR, VERSION_MINOR};
 use crate::util;
 
-const URL: &str = "https://unicode.org/Public/emoji/16.0/emoji-test.txt";
+const URL: &str = concat!(
+    "https://unicode.org/Public/emoji/",
+    VERSION_MAJOR,
+    ".",
+    VERSION_MINOR,
+    "/emoji-test.txt"
+);
 
 /// A single entry in the file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
