@@ -1,3 +1,6 @@
+[workspace]
+members = ["generate"]
+
 [package]
 name = "emojis"
 version = "0.7.0"
@@ -11,8 +14,8 @@ license = "MIT OR Apache-2.0"
 keywords = ["emoji", "unicode", "github", "gemoji"]
 categories = ["text-processing", "no-std"]
 
-[workspace]
-members = ["generate"]
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
 phf = { version = "0.12.1", default-features = false }
