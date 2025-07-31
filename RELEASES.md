@@ -2,11 +2,13 @@
 
 ## 0.7.1
 
-*Unreleased*
+*July 31st, 2025*
 
-- [Expose the Unicode version that the emojis are based on][todo]. Adds a public
-  constant `UNICODE_VERSION` which is the version of the Unicode specification
-  used to generate the emojis in this crate.
+- [Expose the Unicode version that the emojis are based on][b458bc88]. Adds a
+  public constant `UNICODE_VERSION` which is the version of the Unicode
+  specification used to generate the emojis in this crate.
+
+[b458bc88]: https://github.com/rossmacarthur/emojis/commit/b458bc8853cf5e2b79e951b1ae4edacd4c892ccb
 
 ## 0.7.0
 
