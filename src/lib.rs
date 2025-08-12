@@ -459,25 +459,42 @@ impl Emoji {
 impl cmp::PartialEq<Emoji> for Emoji {
     #[inline]
     fn eq(&self, other: &Emoji) -> bool {
-        self.emoji == other.emoji
+        self.emoji.eq(other.emoji)
     }
 }
 
 impl cmp::PartialEq<str> for Emoji {
     #[inline]
     fn eq(&self, s: &str) -> bool {
-        self.as_str() == s
+        self.emoji.eq(s)
     }
 }
 
+// TODO: needed?
 impl cmp::PartialEq<&str> for Emoji {
     #[inline]
     fn eq(&self, s: &&str) -> bool {
-        self.as_str() == *s
+        self.emoji.eq(*s)
     }
 }
 
 impl cmp::Eq for Emoji {}
+
+impl cmp::PartialOrd<Emoji> for Emoji {
+    /// Compares two emojis based on their *Unicode* value.
+    #[inline]
+    fn partial_cmp(&self, other: &Emoji) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl cmp::Ord for Emoji {
+    /// Compares two emojis based on their *Unicode* value.
+    #[inline]
+    fn cmp(&self, other: &Emoji) -> cmp::Ordering {
+        self.emoji.cmp(other.emoji)
+    }
+}
 
 impl hash::Hash for Emoji {
     #[inline]

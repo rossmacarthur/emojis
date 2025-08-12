@@ -1,5 +1,13 @@
 # 📝 Release notes
 
+## 0.7.2
+
+*Unreleased*
+
+- [Implement `PartialOrd` and `Ord` for `Emoji`][todo]. This allows emojis to be
+  compared and sorted. Note that the order is based on the string representation
+  (UTF-8 encoding) of the emoji, not the CLDR order.
+
 ## 0.7.1
 
 *July 31st, 2025*

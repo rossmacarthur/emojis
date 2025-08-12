@@ -1,3 +1,5 @@
+use core::cmp::Ordering;
+
 use emojis::{SkinTone, UnicodeVersion};
 
 #[test]
@@ -29,8 +31,29 @@ fn unicode_version_partial_ord() {
 }
 
 #[test]
-fn emoji_partial_eq_str() {
-    assert_eq!(emojis::get("😀").unwrap(), "😀");
+fn emoji_eq() {
+    let a = emojis::get("😀").unwrap();
+    let b = emojis::get("😃").unwrap();
+    assert!(a != b);
+    assert!(b != a);
+    assert!(a == a);
+    assert!(b == b);
+    assert!(a != "😃");
+    assert!(b == "😃");
+}
+
+#[test]
+fn emoji_ord() {
+    let a = emojis::get("😀").unwrap();
+    let b = emojis::get("😃").unwrap();
+    assert_eq!(a.partial_cmp(b), Some(Ordering::Less));
+    assert_eq!(b.partial_cmp(a), Some(Ordering::Greater));
+    assert_eq!(a.partial_cmp(a), Some(Ordering::Equal));
+    assert_eq!(b.partial_cmp(b), Some(Ordering::Equal));
+    assert_eq!(a.cmp(b), Ordering::Less);
+    assert_eq!(b.cmp(a), Ordering::Greater);
+    assert_eq!(a.cmp(a), Ordering::Equal);
+    assert_eq!(b.cmp(b), Ordering::Equal);
 }
 
 #[test]
