@@ -76,6 +76,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+
     steps:
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@stable
@@ -87,7 +90,10 @@ jobs:
     - name: Check tag against package versions
       run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
 
+    - uses: rust-lang/crates-io-auth-action@v1
+      id: auth
+
     - name: Publish
       env:
-        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
       run: cargo publish

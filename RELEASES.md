@@ -2,11 +2,13 @@
 
 ## 0.7.2
 
-*Unreleased*
+*August 12, 2025*
 
-- [Implement `PartialOrd` and `Ord` for `Emoji`][todo]. This allows emojis to be
-  compared and sorted. Note that the order is based on the string representation
-  (UTF-8 encoding) of the emoji, not the CLDR order.
+- [Implement `PartialOrd` and `Ord` for `Emoji`][e83473d3]. This allows emojis
+  to be compared and sorted. Note that the order is based on the string
+  representation (UTF-8 encoding) of the emoji, not the CLDR order.
+
+[e83473d3]: https://github.com/rossmacarthur/emojis/commit/e83473d3a67b9eab3f2b918d08c4ad9960e2c94f
 
 ## 0.7.1
 
