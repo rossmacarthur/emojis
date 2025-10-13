@@ -405,7 +405,10 @@ impl Emoji {
         // This works because in the generated code we explicitly order skin tone
         // variants in the order of the SkinTone enum variants.
         // See file://../generate/src/unicode.rs
-        let (i, _, _) = self.skin_tone?;
+        let (i, n, _) = self.skin_tone?;
+        if skin_tone as u8 >= n {
+            return None;
+        }
         Some(&crate::gen::EMOJIS[(i as usize) + (skin_tone as usize)])
     }
 

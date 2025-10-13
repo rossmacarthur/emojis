@@ -120,6 +120,26 @@ fn emoji_skin_tones() {
 }
 
 #[test]
+fn emoji_with_skin_tone() {
+    let e = emojis::get("🧑").unwrap();
+    assert_eq!(
+        e.with_skin_tone(SkinTone::Dark).unwrap(),
+        emojis::get("🧑🏿").unwrap()
+    );
+    assert!(e.with_skin_tone(SkinTone::LightAndMediumDark).is_none());
+
+    let e = emojis::get("🤝").unwrap();
+    assert_eq!(
+        e.with_skin_tone(SkinTone::Dark).unwrap(),
+        emojis::get("🤝🏿").unwrap()
+    );
+    assert_eq!(
+        e.with_skin_tone(SkinTone::DarkAndMediumDark),
+        emojis::get("🫱🏿‍🫲🏾")
+    );
+}
+
+#[test]
 fn emoji_shortcodes() {
     for emoji in emojis::iter() {
         assert_eq!(emoji.shortcodes().next(), emoji.shortcode());
