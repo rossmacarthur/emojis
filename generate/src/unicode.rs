@@ -3,6 +3,7 @@
 mod data;
 mod variations;
 
+use std::collections::HashMap;
 use std::str;
 
 use anyhow::bail;
@@ -24,6 +25,7 @@ pub struct ParsedData {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Emoji {
+    pub index: usize,
     pub entry: data::Entry,
     pub skin_tones: usize,
     pub skin_tone: Option<SkinTone>,
@@ -67,36 +69,44 @@ impl Emoji {
 }
 
 pub fn build() -> Result<ParsedData> {
-    let mut emojis: Vec<Emoji> = Vec::new();
+    let mut emojis_map: HashMap<String, Vec<Emoji>> = HashMap::new();
+
     let variations = variations::parse()?;
 
-    for entry in data::parse()? {
+    for (index, entry) in data::parse()?.into_iter().enumerate() {
         if let Group::Component = entry.group {
             continue;
         }
+
+        let base_name = parse_base_name(&entry.name);
 
         match entry.status {
             Status::Component => unreachable!(),
             Status::MinimallyQualified | Status::Unqualified => {
                 // find fully qualified variation
-                emojis
-                    .last_mut()
+                let base = emojis_map
+                    .get_mut(&base_name)
+                    .and_then(|e| e.last_mut())
                     .with_context(|| {
                         format!(
                             "failed to find fully qualified variation for '{}'",
                             entry.name
                         )
-                    })?
-                    .variations
-                    .push(entry.emoji);
+                    })?;
+                assert_eq!(base.entry.status, Status::FullyQualified);
+                assert_eq!(base.entry.group, entry.group);
+                base.variations.push(entry.emoji);
             }
             Status::FullyQualified => {
                 let skin_tone = parse_skin_tone(&entry)?;
 
                 match skin_tone {
                     None | Some(SkinTone::Default) => {
-                        // normal emoji, simply add
+                        // normal emoji, simply add to the list
+                        let emojis = emojis_map.entry(base_name.clone()).or_default();
+                        assert!(emojis.is_empty(), "base emoji not the first entry!");
                         emojis.push(Emoji {
+                            index,
                             entry,
                             skin_tones: 1,
                             skin_tone,
@@ -106,33 +116,23 @@ pub fn build() -> Result<ParsedData> {
 
                     Some(skin_tone) => {
                         // find the default skin tone to set it
-                        let i = {
-                            let (i, def) = emojis
-                                .iter_mut()
-                                .enumerate()
-                                .rev()
-                                .find(|(_, e)| {
-                                    matches!(e.skin_tone, None | Some(SkinTone::Default))
-                                        && e.entry.group == entry.group
-                                        && e.entry.subgroup == entry.subgroup
-                                })
-                                .with_context(|| {
-                                    format!(
-                                        "failed to find the default skin tone for '{}'",
-                                        entry.name
-                                    )
-                                })?;
-                            def.skin_tone = Some(SkinTone::Default);
-                            def.skin_tones += 1;
-                            i
-                        };
+                        let emojis = emojis_map.get_mut(&base_name).with_context(|| {
+                            format!(
+                                "failed to find the base emoji for '{}' (base: {})",
+                                entry.name, &base_name
+                            )
+                        })?;
 
-                        // now add this emoji to the list making sure to
-                        // be consistent with the ordering of skin tones
-                        let j = emojis[i..].partition_point(|e| e.skin_tone < Some(skin_tone));
+                        emojis[0].skin_tone = Some(SkinTone::Default);
+                        emojis[0].skin_tones += 1;
+                        assert!(emojis[0].skin_tones <= 26);
+
+                        // making sure to be consistent with the ordering of skin tones
+                        let i = emojis.partition_point(|e| e.skin_tone < Some(skin_tone));
                         emojis.insert(
-                            i + j,
+                            i,
                             Emoji {
+                                index,
                                 entry,
                                 skin_tones: 1,
                                 skin_tone: Some(skin_tone),
@@ -144,6 +144,17 @@ pub fn build() -> Result<ParsedData> {
             }
         }
     }
+
+    // now flatten the emoji map, ensuring the order is consistent with the
+    // original data (.index)
+    let emojis = {
+        let mut grouped: Vec<_> = emojis_map.into_values().collect();
+        grouped.sort_by_key(|e| e[0].index);
+        for emojis in &mut grouped {
+            emojis.sort_by_key(|e| e.skin_tone);
+        }
+        grouped.into_iter().flatten().collect()
+    };
 
     Ok(ParsedData { emojis, variations })
 }
@@ -192,4 +203,62 @@ fn parse_skin_tone(entry: &data::Entry) -> Result<Option<SkinTone>> {
     };
 
     Ok(Some(skin_tone))
+}
+
+/// Given an emoji name parse the expected base name.
+///
+/// See the test below for examples
+fn parse_base_name(name: &str) -> String {
+    let mut it = name.rsplitn(2, ':');
+    let right = it.next().unwrap().trim();
+    match it.next() {
+        Some(left) => {
+            let right = right
+                .split(',')
+                .map(str::trim)
+                .filter(|part| !part.ends_with("skin tone"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            if right.is_empty() {
+                return left.to_owned();
+            }
+            if right == "person, person" {
+                return left.to_owned();
+            }
+            format!("{left}: {right}")
+        }
+        None => right.to_owned(),
+    }
+}
+
+#[test]
+fn test_parse_base_name() {
+    struct Case {
+        name: &'static str,
+        exp: &'static str,
+    }
+    for case in [
+        Case {
+            name: "grinning face",
+            exp: "grinning face",
+        },
+        Case {
+            name: "man: blond hair",
+            exp: "man: blond hair",
+        },
+        Case {
+            name: "handshake: light skin tone, medium-light skin tone",
+            exp: "handshake",
+        },
+        Case {
+            name: "kiss: woman, man, light skin tone",
+            exp: "kiss: woman, man",
+        },
+        Case {
+            name: "kiss: person, person, light skin tone, medium-light skin tone",
+            exp: "kiss",
+        },
+    ] {
+        assert_eq!(parse_base_name(case.name), case.exp);
+    }
 }

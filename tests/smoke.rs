@@ -7,6 +7,10 @@ fn get_variation() {
     assert_eq!(emojis::get("☹"), emojis::get("☹️"));
     assert_eq!(emojis::get("⭐\u{fe0f}"), emojis::get("⭐"));
     assert_eq!(emojis::get("1\u{fe0f}"), emojis::get("1️⃣"));
+    assert_eq!(
+        emojis::get("👱🏻‍♂️".trim_end_matches("\u{fe0f}")),
+        emojis::get("👱🏻‍♂️")
+    );
 }
 
 #[test]

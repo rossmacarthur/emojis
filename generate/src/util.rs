@@ -3,6 +3,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+use anyhow::Context as _;
 use anyhow::Result;
 use sha2::{Digest, Sha256};
 
@@ -27,7 +28,7 @@ pub fn cached_download(url: &str) -> Result<String> {
         Err(err) => return Err(err.into()),
     }
 
-    let data = download(url)?;
+    let data = download(url).with_context(|| format!("failed to download {url}"))?;
     fs::create_dir_all(path.parent().unwrap())?;
     fs::write(&path, &data)?;
     eprintln!(
