@@ -7,15 +7,17 @@ use anyhow::Result;
 use constcat::concat;
 use serde::Serialize;
 
-use crate::unicode::{VERSION_MAJOR, VERSION_MINOR};
+use crate::unicode::{VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH};
 use crate::util;
 
 const URL: &str = concat!(
-    "https://unicode.org/Public/emoji/",
+    "https://unicode.org/Public/",
     VERSION_MAJOR,
     ".",
     VERSION_MINOR,
-    "/emoji-test.txt"
+    ".",
+    VERSION_PATCH,
+    "/emoji/emoji-test.txt"
 );
 
 /// A single entry in the file.
