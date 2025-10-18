@@ -14,7 +14,7 @@ jobs:
         toolchain: [stable, beta, nightly]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: dtolnay/rust-toolchain@master
       with:
@@ -39,8 +39,8 @@ jobs:
       RUSTFLAGS: --deny warnings
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.61
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@1.66
 
       - name: Test
         run: cargo test --all-features
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: dtolnay/rust-toolchain@stable
 
     - name: Check generated code is up to date
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: dtolnay/rust-toolchain@stable
 
     - name: Install cargo-onedoc
@@ -80,7 +80,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: dtolnay/rust-toolchain@stable
 
     - name: Calculate version from tag

@@ -6,7 +6,7 @@ name = "emojis"
 version = "0.7.2"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2021"
-rust-version = "1.61"
+rust-version = "1.65"
 description = "✨ Lookup emoji in *O(1)* time, access metadata and GitHub shortcodes, iterate over all emoji, and more!"
 readme = "README.md"
 repository = "https://github.com/rossmacarthur/emojis"
@@ -18,7 +18,7 @@ categories = ["text-processing", "no-std"]
 all-features = true
 
 [dependencies]
-phf = { version = "0.12.1", default-features = false }
+phf = { version = "0.13.1", default-features = false }
 serde = { version = "1.0.145", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
