@@ -1,8 +1,21 @@
 # 📝 Release notes
 
+## 0.8.0
+
+*Unreleased*
+
+- [Upgrade to `phf v0.13`][c125053c]. This raises the minimum supported Rust
+  version to 1.66.0.
+- [Import Unicode 17.0 emojis][298370be]
+- [Fix `with_skin_tone` for emojis with only 5 variants][f53cf122]
+
+[c125053c]: https://github.com/rossmacarthur/emojis/commit/c125053cde13babc0ae301acdf66c7b7ca2191a7
+[298370be]: https://github.com/rossmacarthur/emojis/commit/298370be15b86b451f9620e9f49e75603da37da5
+[f53cf122]: https://github.com/rossmacarthur/emojis/commit/f53cf1221ad0bcb93c3925de80962a7a1dba1bad
+
 ## 0.7.2
 
-*August 12, 2025*
+*August 12th, 2025*
 
 - [Implement `PartialOrd` and `Ord` for `Emoji`][e83473d3]. This allows emojis
   to be compared and sorted. Note that the order is based on the string
