@@ -2,7 +2,7 @@
 
 ## 0.8.0
 
-*Unreleased*
+*October 20th, 2025*
 
 - [Upgrade to `phf v0.13`][c125053c]. This raises the minimum supported Rust
   version to 1.66.0.
