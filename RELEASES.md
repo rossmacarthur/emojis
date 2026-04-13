@@ -2,7 +2,7 @@
 
 ## 0.8.1
 
-*Unreleased*
+*April 13th, 2026*
 
 - [Fix license declaration to include Unicode-3.0][#29]. All published versions
   of this crate shipped generated source code derived from Unicode data, so they
