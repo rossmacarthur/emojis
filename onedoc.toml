@@ -1,3 +1,8 @@
+[[doc]]
+input = "src/lib.rs"
+output = "README.md"
+template = "docs/README_TEMPLATE.md"
+
 [links]
 "get" = "https://docs.rs/emojis/latest/emojis/fn.get.html"
 "get_by_shortcode" = "https://docs.rs/emojis/latest/emojis/fn.get_by_shortcode.html"

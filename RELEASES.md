@@ -1,5 +1,17 @@
 # 📝 Release notes
 
+## 0.8.1
+
+*Unreleased*
+
+- [Fix license declaration to include Unicode-3.0][#29]. All published versions
+  of this crate shipped generated source code derived from Unicode data, so they
+  should have included the Unicode-3.0 license.
+
+  *Contributed by [**Michel Lind**](https://github.com/michel-slm)*
+
+[#29]: https://github.com/rossmacarthur/emojis/pull/29
+
 ## 0.8.0
 
 *October 20th, 2025*
@@ -64,6 +76,7 @@
 *September 29th, 2024*
 
 - [Update to Unicode 16.0 emojis][2ce453c8].
+
   *Contributed by [**Linda_pp**](https://github.com/rhysd)*
 
 [2ce453c8]: https://github.com/rossmacarthur/emojis/commit/2ce453c88d795a54c4ca41839b14ecf81b24b63d
@@ -136,6 +149,7 @@
 - [Add `shortcodes()` to iterate over an emoji's shortcodes][74b3a18c]. Some
   emojis have multiple shortcodes, this function allows you to iterate over
   them.
+
   *Contributed by [**Finn Bear**](https://github.com/FinnBear)*
 
 [5bab0ac2]: https://github.com/rossmacarthur/emojis/commit/5bab0ac2384bd894666235e73e5edf0f26038840
