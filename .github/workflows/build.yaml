@@ -32,7 +32,7 @@ jobs:
         cargo test --workspace --all-targets --all-features
         cargo test --workspace --doc --all-features
 
-  msrv:
+  msrv-check:
     runs-on: ubuntu-latest
 
     env:
@@ -44,6 +44,19 @@ jobs:
 
       - name: Test
         run: cargo test --all-features
+
+  msrv-test:
+    runs-on: ubuntu-latest
+
+    env:
+      RUSTFLAGS: --deny warnings
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@1.85
+
+      - name: Test
+        run: cargo check --all-features
 
   generated:
     runs-on: ubuntu-latest
