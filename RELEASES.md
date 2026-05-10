@@ -1,5 +1,17 @@
 # 📝 Release notes
 
+## 0.8.2
+
+*May 10th, 2026*
+
+No public API changes
+
+- [Bump dev dependency `toml` to 1.x.x][#30]
+
+  *Contributed by [**Michel Lind**](https://github.com/michel-slm)*
+
+[#30]: https://github.com/rossmacarthur/emojis/pull/30
+
 ## 0.8.1
 
 *April 13th, 2026*
