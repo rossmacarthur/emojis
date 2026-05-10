@@ -152,7 +152,7 @@ fn write_emoji_struct<W: io::Write>(
         None => write!(w, ", skin_tone: None")?,
     }
     match &github_data.get(e) {
-        Some(github) => write!(w, ", shortcodes: Some(&{:?}) }}", &github)?,
+        Some(github) => write!(w, ", shortcodes: Some(&{github:?}) }}")?,
         None => write!(w, ", shortcodes: None }}")?,
     }
     Ok(())

@@ -119,7 +119,7 @@ pub fn build() -> Result<ParsedData> {
                         let emojis = emojis_map.get_mut(&base_name).with_context(|| {
                             format!(
                                 "failed to find the base emoji for '{}' (base: {})",
-                                entry.name, &base_name
+                                entry.name, base_name
                             )
                         })?;
 
