@@ -152,3 +152,12 @@ fn group_iter_and_emojis() {
     let right: Vec<_> = emojis::iter().collect();
     assert_eq!(left, right);
 }
+
+#[test]
+fn unicode_version_uses_real_unicode_version() {
+    // 🍎 is published as emoji version E0.6, which is really Unicode 6.0.
+    // The detailed translation table is unit tested in `src/lib.rs`.
+    let apple = emojis::get_by_shortcode("apple").unwrap();
+    assert_eq!(apple.to_string(), "🍎");
+    assert_eq!(apple.unicode_version(), UnicodeVersion::new(6, 0));
+}
