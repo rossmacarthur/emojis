@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
 
-use emojis::{SkinTone, UnicodeVersion};
+use emojis::{EmojiVersion, SkinTone, UnicodeVersion};
 
 #[test]
 fn get_variation() {
@@ -159,5 +159,6 @@ fn unicode_version_uses_real_unicode_version() {
     // The detailed translation table is unit tested in `src/lib.rs`.
     let apple = emojis::get_by_shortcode("apple").unwrap();
     assert_eq!(apple.to_string(), "🍎");
+    assert_eq!(apple.emoji_version(), EmojiVersion::new(0, 6));
     assert_eq!(apple.unicode_version(), UnicodeVersion::new(6, 0));
 }

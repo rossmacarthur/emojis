@@ -51,7 +51,7 @@ fn main() -> Result<()> {
     writeln!(f, "pub mod unicode;\n")?;
     writeln!(
         f,
-        "use crate::{{Emoji, Group, SkinTone, UnicodeVersion}};\n"
+        "use crate::{{Emoji, EmojiVersion, Group, SkinTone, UnicodeVersion}};\n"
     )?;
     writeln!(
         f,
@@ -139,10 +139,10 @@ fn write_emoji_struct<W: io::Write>(
     let e = emoji.as_str();
     let group = emoji.entry.group;
     let name = &emoji.entry.name;
-    let uv = &emoji.entry.unicode_version;
+    let ev = &emoji.entry.emoji_version;
     write!(
         w,
-        "Emoji {{ emoji: \"{e}\", name: \"{name}\", unicode_version: {uv:?}, group: Group::{group:?}",
+        "Emoji {{ emoji: \"{e}\", name: \"{name}\", emoji_version: {ev:?}, group: Group::{group:?}",
     )?;
     match emoji.skin_tone {
         Some(tone) => write!(

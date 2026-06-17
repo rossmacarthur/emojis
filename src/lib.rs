@@ -65,6 +65,7 @@
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
 //! assert_eq!(hand.as_bytes(), &[0xf0, 0x9f, 0xa4, 0x8c]);
 //! assert_eq!(hand.name(), "pinched fingers");
+//! assert_eq!(hand.emoji_version(), emojis::EmojiVersion::new(13, 0));
 //! assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 //! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 //! assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));
@@ -149,7 +150,7 @@ pub use crate::gen::UNICODE_VERSION;
 pub struct Emoji {
     emoji: &'static str,
     name: &'static str,
-    unicode_version: UnicodeVersion,
+    emoji_version: EmojiVersion,
     group: Group,
 
     // Stores the id of the emoji with the default skin tone, the number of
@@ -166,6 +167,19 @@ pub struct Emoji {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnicodeVersion {
+    major: u32,
+    minor: u32,
+}
+
+/// An emoji version as defined by the Unicode emoji specification (UTS #51).
+///
+/// Prior to Unicode 11.0 the emoji version diverged from the Unicode version,
+/// e.g. emoji version 0.6 corresponds to Unicode 6.0. From Unicode 11.0 onwards
+/// the two are aligned. See [`Emoji::emoji_version()`] and
+/// [`Emoji::unicode_version()`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct EmojiVersion {
     major: u32,
     minor: u32,
 }
@@ -236,9 +250,27 @@ impl UnicodeVersion {
     pub const fn minor(self) -> u32 {
         self.minor
     }
+}
 
-    /// Translate an emoji version (as published in `emoji-test.txt`) to the
-    /// Unicode version it was released in.
+impl EmojiVersion {
+    /// Construct a new version.
+    #[inline]
+    pub const fn new(major: u32, minor: u32) -> Self {
+        Self { major, minor }
+    }
+
+    #[inline]
+    pub const fn major(self) -> u32 {
+        self.major
+    }
+
+    #[inline]
+    pub const fn minor(self) -> u32 {
+        self.minor
+    }
+
+    /// Translate this emoji version (as published in `emoji-test.txt`) to the
+    /// Unicode Standard version it was released in.
     ///
     /// Prior to Unicode 11.0 the emoji version diverged from the Unicode
     /// version, e.g. emoji version 0.6 was released in Unicode 6.0. From
@@ -246,16 +278,16 @@ impl UnicodeVersion {
     /// table below is returned unchanged.
     ///
     /// See <https://www.unicode.org/reports/tr51/#EmojiVersions>.
-    const fn to_unicode_version(self) -> Self {
+    const fn to_unicode_version(self) -> UnicodeVersion {
         match (self.major, self.minor) {
-            (0, 6) => Self::new(6, 0),
-            (0, 7) => Self::new(7, 0),
-            (1, 0) => Self::new(8, 0),
-            (2, 0) => Self::new(8, 0),
-            (3, 0) => Self::new(9, 0),
-            (4, 0) => Self::new(9, 0),
-            (5, 0) => Self::new(10, 0),
-            _ => self,
+            (0, 6) => UnicodeVersion::new(6, 0),
+            (0, 7) => UnicodeVersion::new(7, 0),
+            (1, 0) => UnicodeVersion::new(8, 0),
+            (2, 0) => UnicodeVersion::new(8, 0),
+            (3, 0) => UnicodeVersion::new(9, 0),
+            (4, 0) => UnicodeVersion::new(9, 0),
+            (5, 0) => UnicodeVersion::new(10, 0),
+            _ => UnicodeVersion::new(self.major, self.minor),
         }
     }
 }
@@ -300,7 +332,30 @@ impl Emoji {
         self.name
     }
 
-    /// Returns the Unicode version this emoji first appeared in.
+    /// Returns the emoji specification (UTS #51) version in which this
+    /// character or sequence was first defined as a presentable emoji.
+    ///
+    /// Prior to Unicode 11.0 this differs from [`unicode_version()`]; from
+    /// Unicode 11.0 onwards the two are the same. See
+    /// <https://www.unicode.org/reports/tr51/#EmojiVersions>.
+    ///
+    /// [`unicode_version()`]: Emoji::unicode_version
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::EmojiVersion;
+    ///
+    /// let apple = emojis::get("🍎").unwrap();
+    /// assert_eq!(apple.emoji_version(), EmojiVersion::new(0, 6));
+    /// ```
+    #[inline]
+    pub const fn emoji_version(&self) -> EmojiVersion {
+        self.emoji_version
+    }
+
+    /// Returns the version of the Unicode Standard in which the underlying
+    /// code point(s) for this emoji were first encoded.
     ///
     /// # Examples
     ///
@@ -309,10 +364,14 @@ impl Emoji {
     ///
     /// let villain = emojis::get("🦹").unwrap();
     /// assert_eq!(villain.unicode_version(), UnicodeVersion::new(11, 0));
+    ///
+    /// // Prior to Unicode 11.0 the emoji and Unicode versions diverge.
+    /// let apple = emojis::get("🍎").unwrap();
+    /// assert_eq!(apple.unicode_version(), UnicodeVersion::new(6, 0));
     /// ```
     #[inline]
     pub const fn unicode_version(&self) -> UnicodeVersion {
-        self.unicode_version.to_unicode_version()
+        self.emoji_version.to_unicode_version()
     }
 
     /// Returns the group this emoji belongs to.
@@ -721,7 +780,7 @@ mod tests {
         ];
         for ((major, minor), (exp_major, exp_minor)) in cases {
             assert_eq!(
-                UnicodeVersion::new(major, minor).to_unicode_version(),
+                EmojiVersion::new(major, minor).to_unicode_version(),
                 UnicodeVersion::new(exp_major, exp_minor),
             );
         }
@@ -731,9 +790,11 @@ mod tests {
     fn to_unicode_version_passes_through_aligned_versions() {
         // From Unicode 11.0 onwards the emoji and Unicode versions are aligned,
         // so anything not in the table is returned unchanged.
-        for version in [(11, 0), (12, 1), (13, 1), (15, 1), (17, 0)] {
-            let v = UnicodeVersion::new(version.0, version.1);
-            assert_eq!(v.to_unicode_version(), v);
+        for (major, minor) in [(11, 0), (12, 1), (13, 1), (15, 1), (17, 0)] {
+            assert_eq!(
+                EmojiVersion::new(major, minor).to_unicode_version(),
+                UnicodeVersion::new(major, minor),
+            );
         }
     }
 }
