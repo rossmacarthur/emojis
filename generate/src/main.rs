@@ -63,6 +63,7 @@ fn main() -> Result<()> {
         unicode::VERSION_MAJOR,
         unicode::VERSION_MINOR
     )?;
+    write_version_translation(&mut f, &unicode_data.version_translations)?;
     write_emojis_slice(
         &mut f,
         &unicode_data,
@@ -84,6 +85,47 @@ fn main() -> Result<()> {
     write_phf_map(&mut f, shortcode_map)?;
     eprintln!("generated: {}", path.strip_prefix(&cwd)?.display());
 
+    Ok(())
+}
+
+/// Writes the emoji-version to Unicode-version translation function, generated
+/// from the Emoji Versions table in UTS #51. From Unicode 11.0 onwards the two
+/// are aligned, so only the diverging versions need an explicit arm; everything
+/// else falls through unchanged.
+fn write_version_translation<W: io::Write>(
+    w: &mut W,
+    translations: &[(unicode::Version, unicode::Version)],
+) -> Result<()> {
+    writeln!(
+        w,
+        "/// Translate an emoji version (UTS #51) to the version of the Unicode"
+    )?;
+    writeln!(w, "/// Standard in which it was released.")?;
+    writeln!(w, "///")?;
+    writeln!(
+        w,
+        "/// See <https://www.unicode.org/reports/tr51/#EmojiVersions>."
+    )?;
+    writeln!(
+        w,
+        "pub const fn unicode_version(emoji_version: EmojiVersion) -> UnicodeVersion {{"
+    )?;
+    writeln!(
+        w,
+        "    match (emoji_version.major(), emoji_version.minor()) {{"
+    )?;
+    for &((em, en), (um, un)) in translations {
+        writeln!(
+            w,
+            "        ({em}, {en}) => UnicodeVersion::new({um}, {un}),"
+        )?;
+    }
+    writeln!(
+        w,
+        "        (major, minor) => UnicodeVersion::new(major, minor),"
+    )?;
+    writeln!(w, "    }}")?;
+    writeln!(w, "}}\n")?;
     Ok(())
 }
 

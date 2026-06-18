@@ -349,24 +349,7 @@ impl Emoji {
     /// ```
     #[inline]
     pub const fn unicode_version(&self) -> UnicodeVersion {
-        // Prior to Unicode 11.0 the emoji version (UTS #51) diverged from the
-        // Unicode Standard version, e.g. emoji 0.6 was released in Unicode 6.0.
-        // Emoji 13.1 was likewise a dot release of Unicode 13.0. From Unicode
-        // 11.0 onwards the two are otherwise aligned, so any version not listed
-        // here is returned unchanged.
-        // See <https://www.unicode.org/reports/tr51/#EmojiVersions>.
-        let EmojiVersion { major, minor } = self.emoji_version;
-        match (major, minor) {
-            (0, 6) => UnicodeVersion::new(6, 0),
-            (0, 7) => UnicodeVersion::new(7, 0),
-            (1, 0) => UnicodeVersion::new(8, 0),
-            (2, 0) => UnicodeVersion::new(8, 0),
-            (3, 0) => UnicodeVersion::new(9, 0),
-            (4, 0) => UnicodeVersion::new(9, 0),
-            (5, 0) => UnicodeVersion::new(10, 0),
-            (13, 1) => UnicodeVersion::new(13, 0),
-            _ => UnicodeVersion::new(major, minor),
-        }
+        crate::gen::unicode_version(self.emoji_version)
     }
 
     /// Returns the group this emoji belongs to.

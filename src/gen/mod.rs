@@ -10,6 +10,24 @@ use crate::{Emoji, EmojiVersion, Group, SkinTone, UnicodeVersion};
 /// The version of [Unicode](https://www.unicode.org/) that the emojis are based on.
 pub const UNICODE_VERSION: UnicodeVersion = UnicodeVersion::new(17, 0);
 
+/// Translate an emoji version (UTS #51) to the version of the Unicode
+/// Standard in which it was released.
+///
+/// See <https://www.unicode.org/reports/tr51/#EmojiVersions>.
+pub const fn unicode_version(emoji_version: EmojiVersion) -> UnicodeVersion {
+    match (emoji_version.major(), emoji_version.minor()) {
+        (0, 6) => UnicodeVersion::new(6, 0),
+        (0, 7) => UnicodeVersion::new(7, 0),
+        (1, 0) => UnicodeVersion::new(8, 0),
+        (2, 0) => UnicodeVersion::new(8, 0),
+        (3, 0) => UnicodeVersion::new(9, 0),
+        (4, 0) => UnicodeVersion::new(9, 0),
+        (5, 0) => UnicodeVersion::new(10, 0),
+        (13, 1) => UnicodeVersion::new(13, 0),
+        (major, minor) => UnicodeVersion::new(major, minor),
+    }
+}
+
 pub const EMOJIS: &[Emoji] = &[
     Emoji { emoji: "😀", name: "grinning face", emoji_version: EmojiVersion { major: 1, minor: 0 }, group: Group::SmileysAndEmotion, skin_tone: None, shortcodes: Some(&["grinning"]) },
     Emoji { emoji: "😃", name: "grinning face with big eyes", emoji_version: EmojiVersion { major: 0, minor: 6 }, group: Group::SmileysAndEmotion, skin_tone: None, shortcodes: Some(&["smiley"]) },
