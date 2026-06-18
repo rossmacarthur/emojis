@@ -155,10 +155,32 @@ fn group_iter_and_emojis() {
 
 #[test]
 fn unicode_version_uses_real_unicode_version() {
-    // 🍎 is published as emoji version E0.6, which is really Unicode 6.0.
-    // The detailed translation table is unit tested in `src/lib.rs`.
-    let apple = emojis::get_by_shortcode("apple").unwrap();
-    assert_eq!(apple.to_string(), "🍎");
-    assert_eq!(apple.emoji_version(), EmojiVersion::new(0, 6));
-    assert_eq!(apple.unicode_version(), UnicodeVersion::new(6, 0));
+    // Prior to Unicode 11.0 the emoji version (UTS #51) diverges from the
+    // Unicode Standard version, and emoji 13.1 was a dot release of Unicode
+    // 13.0. Each representative emoji exercises one row of that translation.
+    // See https://www.unicode.org/reports/tr51/#EmojiVersions
+    let cases = [
+        ("😃", (0, 6), (6, 0)),
+        ("😐", (0, 7), (7, 0)),
+        ("😀", (1, 0), (8, 0)),
+        ("🗨️", (2, 0), (8, 0)),
+        ("🤣", (3, 0), (9, 0)),
+        ("⚕️", (4, 0), (9, 0)),
+        ("🤩", (5, 0), (10, 0)),
+        ("🦹", (11, 0), (11, 0)),
+        ("😶‍🌫️", (13, 1), (13, 0)),
+    ];
+    for (emoji, (emoji_major, emoji_minor), (unicode_major, unicode_minor)) in cases {
+        let e = emojis::get(emoji).unwrap_or_else(|| panic!("missing emoji {emoji:?}"));
+        assert_eq!(
+            e.emoji_version(),
+            EmojiVersion::new(emoji_major, emoji_minor),
+            "emoji version for {emoji:?}",
+        );
+        assert_eq!(
+            e.unicode_version(),
+            UnicodeVersion::new(unicode_major, unicode_minor),
+            "unicode version for {emoji:?}",
+        );
+    }
 }

@@ -268,28 +268,6 @@ impl EmojiVersion {
     pub const fn minor(self) -> u32 {
         self.minor
     }
-
-    /// Translate this emoji version (as published in `emoji-test.txt`) to the
-    /// Unicode Standard version it was released in.
-    ///
-    /// Prior to Unicode 11.0 the emoji version diverged from the Unicode
-    /// version, e.g. emoji version 0.6 was released in Unicode 6.0. From
-    /// Unicode 11.0 onwards the two are aligned, so any version not in the
-    /// table below is returned unchanged.
-    ///
-    /// See <https://www.unicode.org/reports/tr51/#EmojiVersions>.
-    const fn to_unicode_version(self) -> UnicodeVersion {
-        match (self.major, self.minor) {
-            (0, 6) => UnicodeVersion::new(6, 0),
-            (0, 7) => UnicodeVersion::new(7, 0),
-            (1, 0) => UnicodeVersion::new(8, 0),
-            (2, 0) => UnicodeVersion::new(8, 0),
-            (3, 0) => UnicodeVersion::new(9, 0),
-            (4, 0) => UnicodeVersion::new(9, 0),
-            (5, 0) => UnicodeVersion::new(10, 0),
-            _ => UnicodeVersion::new(self.major, self.minor),
-        }
-    }
 }
 
 impl Emoji {
@@ -371,7 +349,24 @@ impl Emoji {
     /// ```
     #[inline]
     pub const fn unicode_version(&self) -> UnicodeVersion {
-        self.emoji_version.to_unicode_version()
+        // Prior to Unicode 11.0 the emoji version (UTS #51) diverged from the
+        // Unicode Standard version, e.g. emoji 0.6 was released in Unicode 6.0.
+        // Emoji 13.1 was likewise a dot release of Unicode 13.0. From Unicode
+        // 11.0 onwards the two are otherwise aligned, so any version not listed
+        // here is returned unchanged.
+        // See <https://www.unicode.org/reports/tr51/#EmojiVersions>.
+        let EmojiVersion { major, minor } = self.emoji_version;
+        match (major, minor) {
+            (0, 6) => UnicodeVersion::new(6, 0),
+            (0, 7) => UnicodeVersion::new(7, 0),
+            (1, 0) => UnicodeVersion::new(8, 0),
+            (2, 0) => UnicodeVersion::new(8, 0),
+            (3, 0) => UnicodeVersion::new(9, 0),
+            (4, 0) => UnicodeVersion::new(9, 0),
+            (5, 0) => UnicodeVersion::new(10, 0),
+            (13, 1) => UnicodeVersion::new(13, 0),
+            _ => UnicodeVersion::new(major, minor),
+        }
     }
 
     /// Returns the group this emoji belongs to.
@@ -758,43 +753,4 @@ pub fn get_by_shortcode(s: &str) -> Option<&'static Emoji> {
     crate::gen::shortcode::MAP
         .get(s)
         .map(|&i| &crate::gen::EMOJIS[i])
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn to_unicode_version_translates_pre_alignment_versions() {
-        // Emoji versions prior to the Unicode 11.0 alignment map to the Unicode
-        // version they were released in.
-        // See https://www.unicode.org/reports/tr51/#EmojiVersions
-        let cases = [
-            ((0, 6), (6, 0)),
-            ((0, 7), (7, 0)),
-            ((1, 0), (8, 0)),
-            ((2, 0), (8, 0)),
-            ((3, 0), (9, 0)),
-            ((4, 0), (9, 0)),
-            ((5, 0), (10, 0)),
-        ];
-        for ((major, minor), (exp_major, exp_minor)) in cases {
-            assert_eq!(
-                EmojiVersion::new(major, minor).to_unicode_version(),
-                UnicodeVersion::new(exp_major, exp_minor),
-            );
-        }
-    }
-
-    #[test]
-    fn to_unicode_version_passes_through_aligned_versions() {
-        // From Unicode 11.0 onwards the emoji and Unicode versions are aligned,
-        // so anything not in the table is returned unchanged.
-        for (major, minor) in [(11, 0), (12, 1), (13, 1), (15, 1), (17, 0)] {
-            assert_eq!(
-                EmojiVersion::new(major, minor).to_unicode_version(),
-                UnicodeVersion::new(major, minor),
-            );
-        }
-    }
 }
