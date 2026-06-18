@@ -532,14 +532,6 @@ impl cmp::PartialEq<str> for Emoji {
     }
 }
 
-// TODO: needed?
-impl cmp::PartialEq<&str> for Emoji {
-    #[inline]
-    fn eq(&self, s: &&str) -> bool {
-        self.emoji.eq(*s)
-    }
-}
-
 impl cmp::Eq for Emoji {}
 
 impl cmp::PartialOrd<Emoji> for Emoji {
