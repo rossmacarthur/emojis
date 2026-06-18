@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
 
-use emojis::{SkinTone, UnicodeVersion};
+use emojis::{EmojiVersion, SkinTone, UnicodeVersion};
 
 #[test]
 fn get_variation() {
@@ -151,4 +151,36 @@ fn group_iter_and_emojis() {
     let left: Vec<_> = emojis::Group::iter().flat_map(|g| g.emojis()).collect();
     let right: Vec<_> = emojis::iter().collect();
     assert_eq!(left, right);
+}
+
+#[test]
+fn unicode_version_uses_real_unicode_version() {
+    // Prior to Unicode 11.0 the emoji version (UTS #51) diverges from the
+    // Unicode Standard version, and emoji 13.1 was a dot release of Unicode
+    // 13.0. Each representative emoji exercises one row of that translation.
+    // See https://www.unicode.org/reports/tr51/#EmojiVersions
+    let cases = [
+        ("😃", (0, 6), (6, 0)),
+        ("😐", (0, 7), (7, 0)),
+        ("😀", (1, 0), (8, 0)),
+        ("🗨️", (2, 0), (8, 0)),
+        ("🤣", (3, 0), (9, 0)),
+        ("⚕️", (4, 0), (9, 0)),
+        ("🤩", (5, 0), (10, 0)),
+        ("🦹", (11, 0), (11, 0)),
+        ("😶‍🌫️", (13, 1), (13, 0)),
+    ];
+    for (emoji, (emoji_major, emoji_minor), (unicode_major, unicode_minor)) in cases {
+        let e = emojis::get(emoji).unwrap_or_else(|| panic!("missing emoji {emoji:?}"));
+        assert_eq!(
+            e.emoji_version(),
+            EmojiVersion::new(emoji_major, emoji_minor),
+            "emoji version for {emoji:?}",
+        );
+        assert_eq!(
+            e.unicode_version(),
+            UnicodeVersion::new(unicode_major, unicode_minor),
+            "unicode version for {emoji:?}",
+        );
+    }
 }

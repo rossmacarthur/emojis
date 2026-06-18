@@ -51,7 +51,7 @@ fn main() -> Result<()> {
     writeln!(f, "pub mod unicode;\n")?;
     writeln!(
         f,
-        "use crate::{{Emoji, Group, SkinTone, UnicodeVersion}};\n"
+        "use crate::{{Emoji, EmojiVersion, Group, SkinTone, UnicodeVersion}};\n"
     )?;
     writeln!(
         f,
@@ -63,6 +63,7 @@ fn main() -> Result<()> {
         unicode::VERSION_MAJOR,
         unicode::VERSION_MINOR
     )?;
+    write_version_translation(&mut f, &unicode_data.version_translations)?;
     write_emojis_slice(
         &mut f,
         &unicode_data,
@@ -84,6 +85,47 @@ fn main() -> Result<()> {
     write_phf_map(&mut f, shortcode_map)?;
     eprintln!("generated: {}", path.strip_prefix(&cwd)?.display());
 
+    Ok(())
+}
+
+/// Writes the emoji-version to Unicode-version translation function, generated
+/// from the Emoji Versions table in UTS #51. From Unicode 11.0 onwards the two
+/// are aligned, so only the diverging versions need an explicit arm; everything
+/// else falls through unchanged.
+fn write_version_translation<W: io::Write>(
+    w: &mut W,
+    translations: &[(unicode::Version, unicode::Version)],
+) -> Result<()> {
+    writeln!(
+        w,
+        "/// Translate an emoji version (UTS #51) to the version of the Unicode"
+    )?;
+    writeln!(w, "/// Standard in which it was released.")?;
+    writeln!(w, "///")?;
+    writeln!(
+        w,
+        "/// See <https://www.unicode.org/reports/tr51/#EmojiVersions>."
+    )?;
+    writeln!(
+        w,
+        "pub const fn unicode_version(emoji_version: EmojiVersion) -> UnicodeVersion {{"
+    )?;
+    writeln!(
+        w,
+        "    match (emoji_version.major(), emoji_version.minor()) {{"
+    )?;
+    for &((em, en), (um, un)) in translations {
+        writeln!(
+            w,
+            "        ({em}, {en}) => UnicodeVersion::new({um}, {un}),"
+        )?;
+    }
+    writeln!(
+        w,
+        "        (major, minor) => UnicodeVersion::new(major, minor),"
+    )?;
+    writeln!(w, "    }}")?;
+    writeln!(w, "}}\n")?;
     Ok(())
 }
 
@@ -139,10 +181,10 @@ fn write_emoji_struct<W: io::Write>(
     let e = emoji.as_str();
     let group = emoji.entry.group;
     let name = &emoji.entry.name;
-    let uv = &emoji.entry.unicode_version;
+    let ev = &emoji.entry.emoji_version;
     write!(
         w,
-        "Emoji {{ emoji: \"{e}\", name: \"{name}\", unicode_version: {uv:?}, group: Group::{group:?}",
+        "Emoji {{ emoji: \"{e}\", name: \"{name}\", emoji_version: {ev:?}, group: Group::{group:?}",
     )?;
     match emoji.skin_tone {
         Some(tone) => write!(

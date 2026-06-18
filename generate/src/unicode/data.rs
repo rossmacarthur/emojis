@@ -26,7 +26,7 @@ pub struct Entry {
     pub group: Group,
     pub subgroup: String,
     pub status: Status,
-    pub unicode_version: UnicodeVersion,
+    pub emoji_version: EmojiVersion,
     pub emoji: String,
     pub name: String,
 }
@@ -68,9 +68,9 @@ pub enum Status {
     Component,
 }
 
-/// The Unicode version.
+/// The emoji specification (UTS #51) version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct UnicodeVersion {
+pub struct EmojiVersion {
     major: u32,
     minor: u32,
 }
@@ -123,13 +123,13 @@ fn parse_group(s: &str) -> Result<Group> {
 fn parse_entry(group: Group, subgroup: String, line: &str) -> Result<Entry> {
     let (code_points, rest) = line.split_once(';').context("expected code points")?;
     let (status, rest) = rest.split_once('#').context("expected status")?;
-    let (emoji, unicode_version, name) = {
+    let (emoji, emoji_version, name) = {
         let mut rest = rest.trim().splitn(3, |c: char| c.is_ascii_whitespace());
         let emoji = rest.next().context("expected emoji")?;
-        let unicode_version = rest.next().context("expected unicode version")?;
+        let emoji_version = rest.next().context("expected emoji version")?;
         let name = rest.next().context("expected name")?;
         ensure!(rest.next().is_none());
-        (emoji, unicode_version, name)
+        (emoji, emoji_version, name)
     };
 
     // Verify that the emoji matches the code points defined.
@@ -139,15 +139,15 @@ fn parse_entry(group: Group, subgroup: String, line: &str) -> Result<Entry> {
 
     let status = parse_status(status.trim())?;
     let emoji = emoji.to_owned();
-    let unicode_version =
-        parse_unicode_version(unicode_version.trim()).context("invalid unicode version")?;
+    let emoji_version =
+        parse_emoji_version(emoji_version.trim()).context("invalid emoji version")?;
     let name = name.to_owned();
 
     Ok(Entry {
         group,
         subgroup,
         status,
-        unicode_version,
+        emoji_version,
         emoji,
         name,
     })
@@ -175,7 +175,7 @@ fn parse_status(s: &str) -> Result<Status> {
     })
 }
 
-fn parse_unicode_version(s: &str) -> Result<UnicodeVersion> {
+fn parse_emoji_version(s: &str) -> Result<EmojiVersion> {
     let (major, minor) = s
         .strip_prefix('E')
         .context("missing 'E'")?
@@ -183,5 +183,5 @@ fn parse_unicode_version(s: &str) -> Result<UnicodeVersion> {
         .context("missing decimal")?;
     let major = major.parse().context("invalid major version")?;
     let minor = minor.parse().context("invalid minor version")?;
-    Ok(UnicodeVersion { major, minor })
+    Ok(EmojiVersion { major, minor })
 }

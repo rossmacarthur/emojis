@@ -1,6 +1,6 @@
 #![cfg(feature = "serde")]
 
-use emojis::{Emoji, Group, SkinTone, UnicodeVersion};
+use emojis::{Emoji, EmojiVersion, Group, SkinTone, UnicodeVersion};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -67,4 +67,13 @@ minor = 0
 fn emoji_deserialize_invalid() {
     let err = serde_json::from_str::<Test>(r#"{"emoji":"invalid"}"#).unwrap_err();
     assert_eq!(err.to_string(), "invalid emoji at line 1 column 18");
+}
+
+#[test]
+fn emoji_version_serialize_roundtrip_json() {
+    let version = EmojiVersion::new(0, 6);
+    let serialized = serde_json::to_string(&version).unwrap();
+    assert_eq!(serialized, r#"{"major":0,"minor":6}"#);
+    let deserialized: EmojiVersion = serde_json::from_str(&serialized).unwrap();
+    assert_eq!(deserialized, version);
 }

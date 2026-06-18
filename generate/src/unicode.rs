@@ -2,6 +2,9 @@
 
 mod data;
 mod variations;
+mod versions;
+
+pub use crate::unicode::versions::Version;
 
 use std::collections::HashMap;
 use std::str;
@@ -21,6 +24,10 @@ pub const VERSION_PATCH: &str = "0";
 pub struct ParsedData {
     pub emojis: Vec<Emoji>,
     pub variations: Vec<String>,
+    /// Emoji versions whose released Unicode version differs from the emoji
+    /// version, as `(emoji_version, unicode_version)` pairs. See
+    /// [`versions`][crate::unicode::versions].
+    pub version_translations: Vec<(Version, Version)>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -156,7 +163,13 @@ pub fn build() -> Result<ParsedData> {
         grouped.into_iter().flatten().collect()
     };
 
-    Ok(ParsedData { emojis, variations })
+    let version_translations = versions::parse()?;
+
+    Ok(ParsedData {
+        emojis,
+        variations,
+        version_translations,
+    })
 }
 
 fn parse_skin_tone(entry: &data::Entry) -> Result<Option<SkinTone>> {

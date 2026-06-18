@@ -73,6 +73,7 @@ let hand = emojis::get("🤌").unwrap();
 assert_eq!(hand.as_str(), "\u{1f90c}");
 assert_eq!(hand.as_bytes(), &[0xf0, 0x9f, 0xa4, 0x8c]);
 assert_eq!(hand.name(), "pinched fingers");
+assert_eq!(hand.emoji_version(), emojis::EmojiVersion::new(13, 0));
 assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));

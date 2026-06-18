@@ -65,6 +65,7 @@
 //! assert_eq!(hand.as_str(), "\u{1f90c}");
 //! assert_eq!(hand.as_bytes(), &[0xf0, 0x9f, 0xa4, 0x8c]);
 //! assert_eq!(hand.name(), "pinched fingers");
+//! assert_eq!(hand.emoji_version(), emojis::EmojiVersion::new(13, 0));
 //! assert_eq!(hand.unicode_version(), emojis::UnicodeVersion::new(13, 0));
 //! assert_eq!(hand.group(), emojis::Group::PeopleAndBody);
 //! assert_eq!(hand.skin_tone(), Some(emojis::SkinTone::Default));
@@ -149,7 +150,7 @@ pub use crate::gen::UNICODE_VERSION;
 pub struct Emoji {
     emoji: &'static str,
     name: &'static str,
-    unicode_version: UnicodeVersion,
+    emoji_version: EmojiVersion,
     group: Group,
 
     // Stores the id of the emoji with the default skin tone, the number of
@@ -166,6 +167,19 @@ pub struct Emoji {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnicodeVersion {
+    major: u32,
+    minor: u32,
+}
+
+/// An emoji version as defined by the Unicode emoji specification (UTS #51).
+///
+/// Prior to Unicode 11.0 the emoji version diverged from the Unicode version,
+/// e.g. emoji version 0.6 corresponds to Unicode 6.0. From Unicode 11.0 onwards
+/// the two are aligned. See [`Emoji::emoji_version()`] and
+/// [`Emoji::unicode_version()`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct EmojiVersion {
     major: u32,
     minor: u32,
 }
@@ -238,6 +252,24 @@ impl UnicodeVersion {
     }
 }
 
+impl EmojiVersion {
+    /// Construct a new version.
+    #[inline]
+    pub const fn new(major: u32, minor: u32) -> Self {
+        Self { major, minor }
+    }
+
+    #[inline]
+    pub const fn major(self) -> u32 {
+        self.major
+    }
+
+    #[inline]
+    pub const fn minor(self) -> u32 {
+        self.minor
+    }
+}
+
 impl Emoji {
     /// Returns this emoji as a string.
     ///
@@ -278,7 +310,30 @@ impl Emoji {
         self.name
     }
 
-    /// Returns the Unicode version this emoji first appeared in.
+    /// Returns the emoji specification (UTS #51) version in which this
+    /// character or sequence was first defined as a presentable emoji.
+    ///
+    /// Prior to Unicode 11.0 this differs from [`unicode_version()`]; from
+    /// Unicode 11.0 onwards the two are the same. See
+    /// <https://www.unicode.org/reports/tr51/#EmojiVersions>.
+    ///
+    /// [`unicode_version()`]: Emoji::unicode_version
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emojis::EmojiVersion;
+    ///
+    /// let apple = emojis::get("🍎").unwrap();
+    /// assert_eq!(apple.emoji_version(), EmojiVersion::new(0, 6));
+    /// ```
+    #[inline]
+    pub const fn emoji_version(&self) -> EmojiVersion {
+        self.emoji_version
+    }
+
+    /// Returns the version of the Unicode Standard in which the underlying
+    /// code point(s) for this emoji were first encoded.
     ///
     /// # Examples
     ///
@@ -287,10 +342,14 @@ impl Emoji {
     ///
     /// let villain = emojis::get("🦹").unwrap();
     /// assert_eq!(villain.unicode_version(), UnicodeVersion::new(11, 0));
+    ///
+    /// // Prior to Unicode 11.0 the emoji and Unicode versions diverge.
+    /// let apple = emojis::get("🍎").unwrap();
+    /// assert_eq!(apple.unicode_version(), UnicodeVersion::new(6, 0));
     /// ```
     #[inline]
     pub const fn unicode_version(&self) -> UnicodeVersion {
-        self.unicode_version
+        crate::gen::unicode_version(self.emoji_version)
     }
 
     /// Returns the group this emoji belongs to.
