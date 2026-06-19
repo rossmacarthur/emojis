@@ -61,6 +61,32 @@ fn emoji_ord() {
 }
 
 #[test]
+fn emoji_debug() {
+    let e = emojis::get("🧑🏻‍💻").unwrap();
+    eprintln!("{:#?}", e);
+    assert_eq!(
+        format!("{:#?}", e),
+        r#"Emoji {
+    emoji: "🧑🏻\u{200d}💻",
+    name: "technologist: light skin tone",
+    emoji_version: EmojiVersion {
+        major: 12,
+        minor: 1,
+    },
+    unicode_version: UnicodeVersion {
+        major: 12,
+        minor: 1,
+    },
+    group: PeopleAndBody,
+    skin_tone: Some(
+        Light,
+    ),
+    shortcodes: None,
+}"#
+    );
+}
+
+#[test]
 fn emoji_display() {
     let s = emojis::get("😀").unwrap().to_string();
     assert_eq!(s, "😀");

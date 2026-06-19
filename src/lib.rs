@@ -146,7 +146,6 @@ pub use crate::gen::UNICODE_VERSION;
 ///
 /// See [Unicode.org](https://unicode.org/emoji/charts/full-emoji-list.html) for
 /// more information.
-#[derive(Debug)]
 pub struct Emoji {
     emoji: &'static str,
     name: &'static str,
@@ -568,6 +567,20 @@ impl convert::AsRef<[u8]> for Emoji {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
+    }
+}
+
+impl fmt::Debug for Emoji {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Emoji")
+            .field("emoji", &self.emoji)
+            .field("name", &self.name)
+            .field("emoji_version", &self.emoji_version)
+            .field("unicode_version", &self.unicode_version())
+            .field("group", &self.group)
+            .field("skin_tone", &self.skin_tone())
+            .field("shortcodes", &self.shortcodes)
+            .finish()
     }
 }
 
