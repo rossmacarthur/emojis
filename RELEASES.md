@@ -1,5 +1,24 @@
 # 📝 Release notes
 
+## 0.9.0
+
+*Unreleased*
+
+- [Improve `Debug` implementation for `Emoji` struct][acb4021a]
+
+- [Remove unnecessary `PartialEq` implementation][4a268805]
+
+- [Fix Unicode version metadata and expose emoji versions][#34]. Fixes the
+  Unicode version by correctly translating form the emoji version. Adds
+  `EmojiVersion` and `Emoji::emoji_version()` for callers that need the UTS #51
+  emoji version separately from the Unicode Standard version.
+
+  *Contributed by [**Mike Fiedler**](https://github.com/miketheman)*
+
+[acb4021a]: https://github.com/rossmacarthur/emojis/commit/acb4021a6647b9dd9079065ae72a8685d9d00b5e
+[4a268805]: https://github.com/rossmacarthur/emojis/commit/4a26880595a8e407e71535dfbd8bffb06ccaeee9
+[#34]: https://github.com/rossmacarthur/emojis/pull/34
+
 ## 0.8.2
 
 *May 10th, 2026*
@@ -30,7 +49,9 @@ No public API changes
 
 - [Upgrade to `phf v0.13`][c125053c]. This raises the minimum supported Rust
   version to 1.66.0.
+
 - [Import Unicode 17.0 emojis][298370be]
+
 - [Fix `with_skin_tone` for emojis with only 5 variants][f53cf122]
 
 [c125053c]: https://github.com/rossmacarthur/emojis/commit/c125053cde13babc0ae301acdf66c7b7ca2191a7
