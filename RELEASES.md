@@ -2,7 +2,7 @@
 
 ## 0.9.0
 
-*Unreleased*
+*June 20th, 2026*
 
 - [Improve `Debug` implementation for `Emoji` struct][acb4021a]
 
