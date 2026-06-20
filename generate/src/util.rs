@@ -1,31 +1,36 @@
 use std::env;
 use std::fs;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
 use anyhow::Context as _;
 use anyhow::Result;
 use sha2::{Digest, Sha256};
 
+const CACHE_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
+
 pub fn cached_download(url: &str) -> Result<String> {
+    let ext = url
+        .rsplit_once('/')
+        .map(|(_, part)| part)
+        .and_then(|part| part.rsplit_once('.').map(|(_, ext)| ext))
+        .unwrap_or("html");
+
     // Check if we have a cached version of the file.
     let checksum = hex::encode(Sha256::digest(url.as_bytes()));
-    let path = Path::new(concat!(env!("CARGO_WORKSPACE_DIR"), "/target/generate"))
-        .join(checksum)
-        .with_extension("txt");
+    let mut path = PathBuf::from_iter([env!("CARGO_WORKSPACE_DIR"), "target/generate", &checksum]);
+    path.set_extension(ext);
 
     let cwd = env::current_dir()?;
 
-    match fs::read_to_string(&path) {
-        Ok(data) => {
-            eprintln!(
-                "using cached: {url}\n    at {}",
-                path.strip_prefix(&cwd)?.display()
-            );
-            return Ok(data);
-        }
-        Err(err) if err.kind() == io::ErrorKind::NotFound => {}
-        Err(err) => return Err(err.into()),
+    if cache_is_fresh(&path)? {
+        let data = fs::read_to_string(&path)?;
+        eprintln!(
+            "using cached: {url}\n    at {}",
+            path.strip_prefix(&cwd)?.display()
+        );
+        return Ok(data);
     }
 
     let data = download(url).with_context(|| format!("failed to download {url}"))?;
@@ -37,6 +42,18 @@ pub fn cached_download(url: &str) -> Result<String> {
     );
 
     Ok(data)
+}
+
+fn cache_is_fresh(path: &Path) -> Result<bool> {
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(false),
+        Err(err) => return Err(err.into()),
+    };
+    Ok(SystemTime::now()
+        .duration_since(metadata.modified()?)
+        .map(|age| age <= CACHE_MAX_AGE)
+        .unwrap_or(false))
 }
 
 pub fn download(url: &str) -> Result<String> {
