@@ -1,5 +1,11 @@
 # 📝 Release notes
 
+## 0.9.1
+
+*Unreleased*
+
+- [Import Unicode 18.0 emojis][xxxxxxxx]
+
 ## 0.9.0
 
 *June 20th, 2026*
