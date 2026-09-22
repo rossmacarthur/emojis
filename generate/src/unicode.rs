@@ -17,7 +17,7 @@ use serde::Serialize;
 pub use crate::unicode::data::Group;
 use crate::unicode::data::Status;
 
-pub const VERSION_MAJOR: &str = "17";
+pub const VERSION_MAJOR: &str = "18";
 pub const VERSION_MINOR: &str = "0";
 pub const VERSION_PATCH: &str = "0";
 

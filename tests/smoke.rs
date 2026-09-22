@@ -210,3 +210,9 @@ fn unicode_version_uses_real_unicode_version() {
         );
     }
 }
+
+#[test]
+fn unicode_v18() {
+    let e = emojis::get("\u{1FAEB}").unwrap();
+    assert_eq!(e.emoji_version(), EmojiVersion::new(18, 0));
+}
