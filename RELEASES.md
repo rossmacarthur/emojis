@@ -2,9 +2,11 @@
 
 ## 0.9.1
 
-*Unreleased*
+*October 17th, 2026*
 
-- [Update to Unicode 18.0 emojis][todo].
+- [Update to Unicode 18.0 emojis][b2ccc65f].
+
+[b2ccc65f]: https://github.com/rossmacarthur/emojis/commit/b2ccc65f43bf0a8d17a3ff681f7da4fb1387164e
 
 ## 0.9.0
 
